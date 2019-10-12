@@ -1,0 +1,14 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Core\\": "core/"
+    }
+  },
+  "require": {
+    "vkcom/vk-php-sdk": "^5.101",
+    "unreal4u/telegram-api": "~3.4",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-pdo": "*"
+  }
+}
