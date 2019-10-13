@@ -10,6 +10,7 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-pdo": "*",
-    "ext-curl": "*"
+    "ext-curl": "*",
+    "clue/socks-react": "1.0"
   }
 }
