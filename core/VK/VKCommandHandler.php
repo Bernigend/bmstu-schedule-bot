@@ -5,6 +5,8 @@ namespace Core\VK;
 
 
 use Core\CommandHandler;
+use Core\Config;
+use Exception;
 
 class VKCommandHandler extends CommandHandler
 {
@@ -21,21 +23,36 @@ class VKCommandHandler extends CommandHandler
 	 * @param int $peerID - идентификатор назначения (куда отправлять ответ)
 	 * @param string $command - переданная пользователем команда
 	 */
-	public function __construct(int $peerID, string $command)
+	public function __construct (int $peerID, string $command)
 	{
+		$this->localCommands = array (
+			'помощь' => 'sendHelp',
+			'насегодня' => 'sendScheduleForToday',
+			'назавтра' => 'sendScheduleForTomorrow',
+			'наэтунеделю' => 'sendScheduleForThisWeek',
+			'наследующуюнеделю' => 'sendScheduleForNextWeek',
+			'изменитьгруппу' => 'changeUserGroup',
+			'задатьвопрос' => 'askNewQuestion',
+		);
+
 		parent::__construct();
 
 		$this->peerID  = $peerID;
 		$this->command = $this->prepareCommand($command);
 	}
 
+	/**
+	 * Обработчик команд пользователя
+	 *
+	 * @throws Exception
+	 */
 	public function handle ()
 	{
 		// Ищем пользователя в БД, если не найден - регистрируем и отправляем сообщение о регистрации
 		$userID = VKUser::find ($this->peerID);
 		if (!$userID) {
 			VKUser::register($this->peerID);
-			VKBot::sendMessage($this->peerID, $this->answers['greetings'], null);
+			VKBot::sendMessage($this->peerID, $this->answers['greetings']);
 			return;
 		}
 
@@ -59,87 +76,116 @@ class VKCommandHandler extends CommandHandler
 	 */
 	protected function createMessage(string $message, array $params = array()) : array
 	{
-		return array_merge(array ('message' => $message), $params);
+		if (isset($params['keyboard']))
+			$params['keyboard'] = $this->getKeyboard($params['keyboard']);
+
+		return array (
+			'text' => $message,
+			'params' => $params
+		);
 	}
 
 	/**
-	 * Обработчик команды "Помощь"
-	 * @return array
+	 * Возвращает JSON представление inline клавиатуры
+	 *
+	 * @param string|null $type
+	 * @return false|mixed|string|null
 	 */
-	protected function sendHelp() : array
+	protected function getKeyboard (?string $type)
 	{
-		// TODO: Implement sendHelp() method.
+		switch ($type) {
+			case 'full':
+				$keyboard = json_encode(
+					array (
+						'one_time' => true,
+						'buttons' => array (
+							array (
+								array (
+									'action' => array (
+										'type' => 'text',
+										'label' => 'На сегодня',
+										'payload' => '1'
+									),
+									'color' => 'primary'
+								),
+								array (
+									'action' => array (
+										'type' => 'text',
+										'label' => 'На завтра',
+										'payload' => '2'
+									),
+									'color' => 'primary'
+								)
+							),
+							array (
+								array (
+									'action' => array (
+										'type' => 'text',
+										'label' => 'На эту неделю',
+										'payload' => '3'
+									),
+									'color' => 'primary'
+								),
+								array (
+									'action' => array (
+										'type' => 'text',
+										'label' => 'На следующую неделю',
+										'payload' => '4'
+									),
+									'color' => 'primary'
+								)
+							),
+							array (
+								array (
+									'action' => array (
+										'type' => 'text',
+										'label' => 'Изменить группу',
+										'payload' => '5'
+									),
+									'color' => 'secondary'
+								)
+							)
+						)
+					),
+					JSON_UNESCAPED_UNICODE
+				);
+				break;
+
+			default:
+				$keyboard = null;
+				break;
+		}
+
+		return $keyboard;
 	}
 
-	/**
-	 * Обработчик команды "Прислать расписание на сегодня"
-	 * @return array
-	 */
-	protected function sendScheduleForToday() : array
-	{
-		// TODO: Implement sendScheduleForToday() method.
-	}
 
-	/**
-	 * Обработчик команды "Прислать расписание на завтра"
-	 * @return array
-	 */
-	protected function sendScheduleForTomorrow() : array
-	{
-		// TODO: Implement sendScheduleForTomorrow() method.
-	}
+	/******************************************************************************
+	 * ОБРАБОТЧИКИ КОМАНД
+	 ******************************************************************************/
 
-	/**
-	 * Обработчик команды "Прислать расписание на эту неделю"
-	 * @return array
-	 */
-	protected function sendScheduleForThisWeek() : array
-	{
-		// TODO: Implement sendScheduleForThisWeek() method.
-	}
-
-	/**
-	 * Обработчик команды "Прислать расписание на следующую неделю"
-	 * @return array
-	 */
-	protected function sendScheduleForNextWeek() : array
-	{
-		// TODO: Implement sendScheduleForNextWeek() method.
-	}
-
-	/**
-	 * Обработчик команды "Изменить группу"
-	 * @return array
-	 */
-	protected function changeUserGroup() : array
-	{
-		// TODO: Implement changeUserGroup() method.
-	}
-
-	/**
-	 * Обработчик команды "Задать вопрос"
-	 * @return array
-	 */
-	protected function askNewQuestion() : array
-	{
-		// TODO: Implement askNewQuestion() method.
-	}
-
-	/**
-	 * Обработчик ввода группы пользователя
-	 * @return array
-	 */
-	protected function inputUserGroup() : array
-	{
-		// TODO: Implement inputUserGroup() method.
-	}
 
 	/**
 	 * Обработчик ввода текста вопроса
 	 * @return array
+	 * @throws \VK\Exceptions\VKApiException
+	 * @throws \VK\Exceptions\VKClientException
 	 */
 	protected function inputQuestionText() : array
 	{
-		// TODO: Implement inputQuestionText() method.
+		// Получаем информацию о пользователе
+		$userInfo = VKBot::getVKApiClient()->users()->get(Config::VK_API_ACCESS_TOKEN, array (
+			'user_ids' => $this->peerID,
+			'fields' => 'first_name', 'last_name'
+		));
+
+		$message  = '⚠ Новый вопрос от ' . $userInfo[0]['first_name'] . ' ' . $userInfo[0]['last_name'] . ' @id' . $this->peerID . ' [VK]<br><br>';
+		$message .= 'Вопрос:<br>"' . $this->command['original'] . '"';
+
+		// Отправляем уведомление в беседу разработчиков
+		VKBot::sendMessage(Config::VK_DEVELOPERS_TALK_PEER_ID, $message);
+
+		$this->user->update('expected_input', null);
+		return $this->createMessage('Ваш вопрос был успешно отправлен.<br>С вами свяжутся в ближайшее время', array ('keyboard' => 'full'));
 	}
 }
