@@ -43,8 +43,8 @@ class TelegramCommandHandler extends CommandHandler
 		// Ищем пользователя в БД, если не найден - регистрируем и отправляем сообщение о регистрации
 		$userID = TelegramUser::find ($this->chatID);
 		if (!$userID) {
-			TelegramUser::register($this->chatID);
-			TelegramBot::sendMessage($this->chatID, $this->answers['greetings']);
+			TelegramUser::register($this->chatID, 'group_name');
+			TelegramBot::sendMessage($this->chatID, $this->answers['greetings_with_send_group_name']);
 			return;
 		}
 

@@ -56,7 +56,8 @@ abstract class User
 	 * Регистрирует пользователя в системе, добавляя информацию о нём в базу данных
 	 *
 	 * @param $id - специфичный для этой таблицы БД идентификатор пользователя
+	 * @param string|null $expectedInput - требуемый от пользователя ввод
 	 * @return int - ID нового пользователя из базы данных
 	 */
-	public static abstract function register ($id) : int;
+	public static abstract function register ($id, ?string $expectedInput = null) : int;
 }

@@ -51,8 +51,8 @@ class VKCommandHandler extends CommandHandler
 		// Ищем пользователя в БД, если не найден - регистрируем и отправляем сообщение о регистрации
 		$userID = VKUser::find ($this->peerID);
 		if (!$userID) {
-			VKUser::register($this->peerID);
-			VKBot::sendMessage($this->peerID, $this->answers['greetings']);
+			VKUser::register($this->peerID, 'group_name');
+			VKBot::sendMessage($this->peerID, $this->answers['greetings_with_send_group_name']);
 			return;
 		}
 
@@ -141,6 +141,16 @@ class VKCommandHandler extends CommandHandler
 										'type' => 'text',
 										'label' => 'Изменить группу',
 										'payload' => '5'
+									),
+									'color' => 'secondary'
+								)
+							),
+							array (
+								array (
+									'action' => array (
+										'type' => 'text',
+										'label' => 'Задать вопрос',
+										'payload' => '6'
 									),
 									'color' => 'secondary'
 								)

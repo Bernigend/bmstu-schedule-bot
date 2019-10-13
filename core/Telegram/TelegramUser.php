@@ -16,7 +16,7 @@ class TelegramUser extends User
 	 *
 	 * @param $chatID
 	 */
-	public function __construct($chatID)
+	public function __construct ($chatID)
 	{
 		$this->id = $chatID;
 	}
@@ -29,7 +29,7 @@ class TelegramUser extends User
 	 * @return bool - true, если изменение прошло успешно
 	 * @throws Exception
 	 */
-	public function update(string $column, $value): bool
+	public function update (string $column, $value) : bool
 	{
 		DB::query('UPDATE `' . Config::DB_PREFIX . 'users_telegram` SET `' . $column . '` = ? WHERE `id` = ?', array ($value, $this->id));
 		return true;
@@ -41,7 +41,7 @@ class TelegramUser extends User
 	 * @return object - загруженные данные из базы данных
 	 * @throws Exception
 	 */
-	public function loadData(): object
+	public function loadData () : object
 	{
 		$this->data = DB::query('SELECT * FROM `' . Config::DB_PREFIX . 'users_telegram` WHERE `id` = ?', array ($this->id))->fetchObject();
 		return $this->data;
@@ -54,7 +54,7 @@ class TelegramUser extends User
 	 * @return integer|false - ID пользователя в базе данных, либо false, если тот не найден
 	 * @throws Exception
 	 */
-	public static function find($chatID)
+	public static function find ($chatID)
 	{
 		return DB::getOne('SELECT `id` FROM `' . Config::DB_PREFIX . 'users_telegram` WHERE `chat_id` = ?', array ($chatID));
 	}
@@ -63,12 +63,13 @@ class TelegramUser extends User
 	 * Регистрирует пользователя в системе, добавляя информацию о нём в базу данных
 	 *
 	 * @param $chatID - специфичный для этой таблицы БД идентификатор пользователя
+	 * @param string|null $expectedInput - требуемый от пользователя ввод
 	 * @return int - ID нового пользователя из базы данных
 	 * @throws Exception
 	 */
-	public static function register($chatID): int
+	public static function register ($chatID, ?string $expectedInput = null) : int
 	{
-		DB::query ('INSERT INTO `' . Config::DB_PREFIX . 'users_telegram` SET `chat_id` = ?', array ($chatID));
+		DB::query ('INSERT INTO `' . Config::DB_PREFIX . 'users_telegram` SET `chat_id` = ?, `expected_input` = ?', array ($chatID, $expectedInput));
 		return DB::insertId();
 	}
 }

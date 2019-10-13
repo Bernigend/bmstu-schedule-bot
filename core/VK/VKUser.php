@@ -37,12 +37,13 @@ class VKUser extends User
 	 * Регистрирует пользователя в системе, добавляя информацию о нём в базу данных
 	 *
 	 * @param $peerId - специфичный для этой таблицы БД идентификатор пользователя
+	 * @param string|null $expectedInput - требуемый от пользователя ввод
 	 * @return int - ID нового пользователя из базы данных
 	 * @throws Exception
 	 */
-	public static function register ($peerId) : int
+	public static function register ($peerId, ?string $expectedInput = null) : int
 	{
-		DB::query ('INSERT INTO `' . Config::DB_PREFIX . 'users_vk` SET `peer_id` = ?', array ($peerId));
+		DB::query ('INSERT INTO `' . Config::DB_PREFIX . 'users_vk` SET `peer_id` = ?, `expected_input` = ?', array ($peerId, $expectedInput));
 		return DB::insertId();
 	}
 
