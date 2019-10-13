@@ -100,11 +100,6 @@ class VKBot extends VKCallbackApiServerHandler
 		}
 	}
 
-	public static function sendMessage (int $peerID, string $message, ?array $params)
-	{
-
-	}
-
 	/**
 	 * Проверяет отправителя события
 	 * Если совпадает ID группы и секретный ключ - событие пришло от сервера VK
@@ -123,6 +118,47 @@ class VKBot extends VKCallbackApiServerHandler
 			return false;
 
 		return true;
+	}
+
+	/**
+	 * Отправляет сообщение
+	 *
+	 * @param int $peerID
+	 * @param string $message
+	 * @param array $params
+	 * @throws \VK\Exceptions\Api\VKApiMessagesCantFwdException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesChatBotFeatureException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesChatUserNoAccessException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesContactNotFoundException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesDenySendException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesKeyboardInvalidException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesPrivacyException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesTooLongForwardsException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesTooLongMessageException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesTooManyPostsException
+	 * @throws \VK\Exceptions\Api\VKApiMessagesUserBlockedException
+	 * @throws \VK\Exceptions\VKApiException
+	 * @throws \VK\Exceptions\VKClientException
+	 */
+	public static function sendMessage (int $peerID, string $message, array $params = array ())
+	{
+		static::$vkApiClient->messages()->send(Config::VK_API_ACCESS_TOKEN, array (
+			'peer_id' => $peerID,
+			'message' => $message,
+			'keyboard' => $params['keyboard'] ?? '',
+			'dont_parse_links' => 1,
+			'random_id' => random_int(1, 999999999999)
+		));
+	}
+
+	/**
+	 * Возвращает VKApiClient
+	 *
+	 * @return VKApiClient
+	 */
+	public static function getVKApiClient ()
+	{
+		return static::$vkApiClient;
 	}
 
 	/**
