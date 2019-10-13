@@ -7,7 +7,7 @@ require_once '../vendor/autoload.php';
 
 // Если бот выключен, прекращаем работу
 if (!Config::BOT_ONLINE)
-	die();
+	die('ok');
 
 // Настройка вывода ошибок
 error_reporting(Config::ERROR_REPORTING_LEVEL);
