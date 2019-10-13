@@ -105,6 +105,8 @@ abstract class CommandHandler
 	protected $answers = array (
 		// Сообщения
 		'greetings' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br>Чтобы получить помощь используйте команду /help',
+		'greetings_with_send_group_name' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br><br>⚠ Теперь пришлите свою группу.<br>Например: ИУ1-11Б, К3-12Б и др.<br><br>Чтобы получить помощь, используйте команду /help',
+
 		'available_commands' => 'Доступные команды<br><br> -- Вывести список команд -- <br>Варианты: 0 или /help<br> -- На сегодня -- <br>Варианты: 1 или /today [группа]<br> -- На завтра -- <br>Варианты: 2 или /tomorrow [группа]<br> -- На эту неделю -- <br>Варианты: 3 или /thisWeek [группа]<br> -- На след. неделю -- <br>Варианты: 4 или /nextWeek [группа]<br> -- Изменить группу по умолчанию -- <br>Варианты: 5 или /changeGroup [группа]<br> -- Задать вопрос -- <br>Варианты: 6 или /askQuestion<br><br>Если вы хотите посмотреть расписание группы, отличной от установленной по умолчанию, при использовании команды указывайте группу (через пробел), где указано [группа].<br>Например: /today К3-12Б выведет расписание группы К3-12Б на сегодня.<br><br>Бота можно добавить в беседу. Для работы с ним обращайтесь к нему с помощью @club186813513. Например @club186813513 /today К3-12Б',
 
 		// Уведомления
@@ -264,9 +266,9 @@ abstract class CommandHandler
 			return $this->createMessage($this->answers[$schedule['error']]);
 
 		if (date('W')%2)
-			$message = 'Вы учитесь по числителю';
-		else
 			$message = 'Вы учитесь по знаменателю';
+		else
+			$message = 'Вы учитесь по числителю';
 		$message .= '<br>';
 
 		if (date('n') > 8)
@@ -295,9 +297,9 @@ abstract class CommandHandler
 			return $this->createMessage($this->answers[$schedule['error']]);
 
 		if (date('W', time() + 86400)%2)
-			$message = 'Завтра вы будете учиться по числителю';
-		else
 			$message = 'Завтра вы будете учиться по знаменателю';
+		else
+			$message = 'Завтра вы будете учиться по числителю';
 		$message .= '<br>';
 
 		if (date('n', time() + 86400) > 8)
@@ -326,9 +328,9 @@ abstract class CommandHandler
 			return $this->createMessage($this->answers[$schedule['error']]);
 
 		if (date('W')%2)
-			$message = 'На этой неделе вы учитесь по числителю';
-		else
 			$message = 'На этой неделе вы учитесь по знаменателю';
+		else
+			$message = 'На этой неделе вы учитесь по числителю';
 		$message .= '<br>';
 
 		if (date('n') > 8)
@@ -357,9 +359,9 @@ abstract class CommandHandler
 			return $this->createMessage($this->answers[$schedule['error']]);
 
 		if (date('W', time()+86400*7)%2)
-			$message = 'На следующей неделе вы будете учиться по числителю';
-		else
 			$message = 'На следующей неделе вы будете учиться по знаменателю';
+		else
+			$message = 'На следующей неделе вы будете учиться по числителю';
 		$message .= '<br>';
 
 		if (date('n', time()+86400*7) > 8)
