@@ -9,6 +9,7 @@
     "unreal4u/telegram-api": "~3.4",
     "ext-json": "*",
     "ext-mbstring": "*",
-    "ext-pdo": "*"
+    "ext-pdo": "*",
+    "ext-curl": "*"
   }
 }
