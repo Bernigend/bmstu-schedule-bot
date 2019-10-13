@@ -156,7 +156,7 @@ abstract class CommandHandler
 			if (isset ($this->commands [$this->command['name']]))
 				$message = $this->{$this->commands [$this->command['name']]}();
 			else
-				$message = $this->createMessage($this->answers['undefined_command'] . $this->command['name'], array ('keyboard' => 'full'));
+				$message = $this->createMessage($this->answers['undefined_command'], array ('keyboard' => 'full'));
 		// Если от пользователя ожидается какой-либо ввод, обрабатываем его
 		} else {
 			if (isset ($this->expectedInputTypes [$this->user->data->expected_input]))
