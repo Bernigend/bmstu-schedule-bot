@@ -164,7 +164,7 @@ class VKBot extends VKCallbackApiServerHandler
 	/**
 	 * Инициализирует подключение к VK API
 	 */
-	protected static function initVKApiClient () : void
+	public static function initVKApiClient () : void
 	{
 		static::$vkApiClient = new VKApiClient(Config::VK_API_VERSION);
 	}
