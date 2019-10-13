@@ -64,7 +64,6 @@ class ScheduleViewer
 	 */
 	protected function getDay (array $schedule, int $weekDay, string $weekNum)
 	{
-		$pairNum = array ('8' => 1, '10' => 2, '12' => 3, '13' => 4, '15' => 5, '17' => 6, '19' => 7);
 		$weekDays = array ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье');
 		$return = '';
 
@@ -74,7 +73,8 @@ class ScheduleViewer
 			return $return . 'Выходной день';
 
 		foreach ($schedule[$weekDay-1][$weekNum] as $pair) {
-			$return .= "[{$pairNum[$pair['time']['from_h']]}. {$pair['time']['string']}]<br>";
+			$return .= "[{$pair['time']['string']}]<br>";
+			$personExists = false;
 
 			if (!empty($pair['subject']))
 				$return .= $pair['subject'];
@@ -82,11 +82,17 @@ class ScheduleViewer
 			if (!empty($pair['prefix']))
 				$return .= ' ' . $pair['prefix'];
 
-			if (!empty($pair['person']))
-				$return .= ' | ' . $pair['person'];
+			if (!empty($pair['person'])) {
+				$return .= '<br>' . $pair['person'];
+				$personExists = true;
+			}
 
-			if (!empty($pair['cabinet']))
-				$return .= ' | ' . $pair['cabinet'];
+			if (!empty($pair['cabinet'])) {
+				if ($personExists)
+					$return .= ' | ' . $pair['cabinet'];
+				else
+					$return .= '<br>' . $pair['cabinet'];
+			}
 
 			$return .= '<br>';
 		}
