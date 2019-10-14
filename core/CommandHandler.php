@@ -48,32 +48,35 @@ abstract class CommandHandler
 	 */
 	protected $commands = array (
 		// Список доступных команд
-		'0' => 'sendHelp',
+		0 => 'sendHelp',
 		'/help' => 'sendHelp',
 
 		// Расписание на сегодня
-		'1' => 'sendScheduleForToday',
+		1 => 'sendScheduleForToday',
 		'/today' => 'sendScheduleForToday',
 
 		// Расписание на завтра
-		'2' => 'sendScheduleForTomorrow',
+		2 => 'sendScheduleForTomorrow',
 		'/tomorrow' => 'sendScheduleForTomorrow',
 
 		// Расписание на текущую неделю
-		'3' => 'sendScheduleForThisWeek',
+		3 => 'sendScheduleForThisWeek',
 		'/thisweek' => 'sendScheduleForThisWeek',
 
 		// Расписание на текущую неделю
-		'4' => 'sendScheduleForNextWeek',
+		4 => 'sendScheduleForNextWeek',
 		'/nextweek' => 'sendScheduleForNextWeek',
 
 		// Изменение группы
-		'5' => 'changeUserGroup',
+		5 => 'changeUserGroup',
 		'/changegroup' => 'changeUserGroup',
 
 		// Изменение группы
-		'6' => 'askNewQuestion',
-		'/askquestion' => 'askNewQuestion'
+		6 => 'askNewQuestion',
+		'/askquestion' => 'askNewQuestion',
+
+		// Отмена ввода
+		'/cancel' => 'cancelInput'
 	);
 
 	/**
@@ -106,8 +109,8 @@ abstract class CommandHandler
 		// Сообщения
 		'greetings' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br>Чтобы получить помощь используйте команду /help',
 		'greetings_with_send_group_name' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br><br>⚠ Теперь пришлите свою группу.<br>Например: ИУ1-11Б, К3-12Б и др.<br><br>Чтобы получить помощь, используйте команду /help',
-
-		'available_commands' => 'Доступные команды<br><br> -- Вывести список команд -- <br>Варианты: 0 или /help<br> -- На сегодня -- <br>Варианты: 1 или /today [группа]<br> -- На завтра -- <br>Варианты: 2 или /tomorrow [группа]<br> -- На эту неделю -- <br>Варианты: 3 или /thisWeek [группа]<br> -- На след. неделю -- <br>Варианты: 4 или /nextWeek [группа]<br> -- Изменить группу по умолчанию -- <br>Варианты: 5 или /changeGroup [группа]<br> -- Задать вопрос -- <br>Варианты: 6 или /askQuestion<br><br>Если вы хотите посмотреть расписание группы, отличной от установленной по умолчанию, при использовании команды указывайте группу (через пробел), где указано [группа].<br>Например: /today К3-12Б выведет расписание группы К3-12Б на сегодня.<br><br>Бота можно добавить в беседу. Для работы с ним обращайтесь к нему с помощью @club186813513. Например @club186813513 /today К3-12Б',
+		'canceled' => 'Отменено',
+		'available_commands' => 'Доступные команды<br><br>0. Список команд (/help)<br>1. На сегодня (/today [группа])<br>2. На завтра (/tomorrow [группа])<br>3. На эту неделю (/thisWeek [группа])<br>4. На следующую неделю (/nextWeek [группа])<br>5. Изменить группу (/changeGroup [группа])<br>6. Задать вопрос (/askQuestion)<br><br>Можно присылать цифрами, русским текстом или командами, указанными в скобках',
 
 		// Уведомления
 		'send_group_name' => 'Пришлите название своей группы.<br>Например: ИУ1-11Б, К3-12Б и др.',
@@ -151,20 +154,24 @@ abstract class CommandHandler
 	 *
 	 * @return array
 	 */
-	public function getAnswerToCommand () : array
+	public function getAnswerToCommand () : ?array
 	{
 		// Если от пользователя не ожидается какой-либо ввод, передаём команду её обработчику
 		if (is_null ($this->user->data->expected_input)) {
 			if (isset ($this->commands [$this->command['name']]))
 				$message = $this->{$this->commands [$this->command['name']]}();
 			else
-				$message = $this->createMessage($this->answers['undefined_command'], array ('keyboard' => 'full'));
+				$message = null;
 		// Если от пользователя ожидается какой-либо ввод, обрабатываем его
 		} else {
-			if (isset ($this->expectedInputTypes [$this->user->data->expected_input]))
-				$message = $this->{$this->expectedInputTypes [$this->user->data->expected_input]}();
-			else
-				$message = $this->createMessage($this->answers['undefined_expected_input']);
+			if (isset ($this->commands [$this->command['name']]) && $this->commands [$this->command['name']] == 'cancelInput')
+				$message = $this->{$this->commands [$this->command['name']]}();
+			else {
+				if (isset ($this->expectedInputTypes [$this->user->data->expected_input]))
+					$message = $this->{$this->expectedInputTypes [$this->user->data->expected_input]}();
+				else
+					$message = $this->createMessage($this->answers['undefined_expected_input']);
+			}
 		}
 
 		return $message;
@@ -188,7 +195,7 @@ abstract class CommandHandler
 		$preparedCommand = trim($preparedCommand);
 		$preparedCommand = explode(' ', $preparedCommand);
 
-		if (isset($this->commands[$preparedCommand[0]]) && count($preparedCommand) > 1) {
+		if (array_key_exists($preparedCommand[0], $this->commands) && count($preparedCommand) > 1) {
 			$returnCommand['name'] = array_shift($preparedCommand);
 			$returnCommand['arguments'] = $preparedCommand;
 		}
@@ -243,6 +250,20 @@ abstract class CommandHandler
 	/******************************************************************************
 	 * ОБРАБОТЧИКИ КОМАНД
 	 ******************************************************************************/
+
+
+	/**
+	 * Обработчик команды "Отмена"
+	 * @return array
+	 */
+	public function cancelInput () : ?array
+	{
+		if (is_null($this->user->data->expected_input))
+			return null;
+
+		$this->user->update('expected_input', null);
+		return $this->createMessage($this->answers['canceled'], array ('keyboard' => 'full'));
+	}
 
 
 	/**
@@ -389,9 +410,8 @@ abstract class CommandHandler
 			return $this->inputUserGroup($this->command['arguments'][0]);
 
 		$this->user->update('expected_input', 'group_name');
-		$this->user->update('group_symbolic', null);
 
-		return $this->createMessage($this->answers['send_group_name']);
+		return $this->createMessage($this->answers['send_group_name'], array ('keyboard' => 'cancel'));
 	}
 
 	/**
@@ -401,7 +421,7 @@ abstract class CommandHandler
 	protected function askNewQuestion () : array
 	{
 		$this->user->update('expected_input', 'question_text');
-		return $this->createMessage($this->answers['send_question_text']);
+		return $this->createMessage($this->answers['send_question_text'], array ('keyboard' => 'cancel'));
 	}
 
 	/**
