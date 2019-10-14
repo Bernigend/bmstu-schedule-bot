@@ -26,7 +26,9 @@ class VKCommandHandler extends CommandHandler
 	public function __construct (int $peerID, string $command)
 	{
 		$this->localCommands = array (
+			'отмена' => 'cancelInput',
 			'помощь' => 'sendHelp',
+			'списоккоманд' => 'sendHelp',
 			'насегодня' => 'sendScheduleForToday',
 			'назавтра' => 'sendScheduleForTomorrow',
 			'наэтунеделю' => 'sendScheduleForThisWeek',
@@ -62,6 +64,8 @@ class VKCommandHandler extends CommandHandler
 
 		// Получаем обработанный ответ на команду пользователя
 		$message = $this->getAnswerToCommand();
+		if (is_null($message))
+			return;
 
 		VKBot::sendMessage($this->peerID, $message['text'], $message['params']);
 		return;
@@ -76,8 +80,7 @@ class VKCommandHandler extends CommandHandler
 	 */
 	protected function createMessage(string $message, array $params = array()) : array
 	{
-		if (isset($params['keyboard']))
-			$params['keyboard'] = $this->getKeyboard($params['keyboard']);
+		$params['keyboard'] = $this->getKeyboard($params['keyboard'] ?? null);
 
 		return array (
 			'text' => $message,
@@ -95,77 +98,103 @@ class VKCommandHandler extends CommandHandler
 	{
 		switch ($type) {
 			case 'full':
-				$keyboard = json_encode(
-					array (
-						'one_time' => true,
-						'buttons' => array (
+				$keyboard = array (
+					'one_time' => false,
+					'buttons' => array (
+						array (
 							array (
-								array (
-									'action' => array (
-										'type' => 'text',
-										'label' => 'На сегодня',
-										'payload' => '1'
-									),
-									'color' => 'primary'
+								'action' => array (
+									'type' => 'text',
+									'label' => 'На сегодня',
+									'payload' => '1'
 								),
-								array (
-									'action' => array (
-										'type' => 'text',
-										'label' => 'На завтра',
-										'payload' => '2'
-									),
-									'color' => 'primary'
-								)
+								'color' => 'primary'
 							),
 							array (
-								array (
-									'action' => array (
-										'type' => 'text',
-										'label' => 'На эту неделю',
-										'payload' => '3'
-									),
-									'color' => 'primary'
+								'action' => array (
+									'type' => 'text',
+									'label' => 'На завтра',
+									'payload' => '2'
 								),
-								array (
-									'action' => array (
-										'type' => 'text',
-										'label' => 'На следующую неделю',
-										'payload' => '4'
-									),
-									'color' => 'primary'
-								)
+								'color' => 'primary'
+							)
+						),
+						array (
+							array (
+								'action' => array (
+									'type' => 'text',
+									'label' => 'На эту неделю',
+									'payload' => '3'
+								),
+								'color' => 'primary'
 							),
 							array (
-								array (
-									'action' => array (
-										'type' => 'text',
-										'label' => 'Изменить группу',
-										'payload' => '5'
-									),
-									'color' => 'secondary'
-								)
+								'action' => array (
+									'type' => 'text',
+									'label' => 'На следующую неделю',
+									'payload' => '4'
+								),
+								'color' => 'primary'
+							)
+						),
+						array (
+							array (
+								'action' => array (
+									'type' => 'text',
+									'label' => 'Изменить группу',
+									'payload' => '5'
+								),
+								'color' => 'secondary'
+							)
+						),
+						array (
+							array (
+								'action' => array (
+									'type' => 'text',
+									'label' => 'Задать вопрос',
+									'payload' => '6'
+								),
+								'color' => 'secondary'
 							),
 							array (
-								array (
-									'action' => array (
-										'type' => 'text',
-										'label' => 'Задать вопрос',
-										'payload' => '6'
-									),
-									'color' => 'secondary'
-								)
+								'action' => array (
+									'type' => 'text',
+									'label' => 'Список команд',
+									'payload' => '0'
+								),
+								'color' => 'secondary'
 							)
 						)
+					)
+				);
+				break;
+
+			case 'cancel':
+				$keyboard = array (
+					'buttons' => array (
+						array (
+							array (
+								'action' => array (
+									'type' => 'text',
+									'label' => 'Отмена',
+									'payload' => '-1'
+								),
+								'color' => 'secondary'
+							)
+						),
 					),
-					JSON_UNESCAPED_UNICODE
 				);
 				break;
 
 			default:
-				$keyboard = null;
+				$keyboard = array (
+					'one_time' => true,
+					'buttons'  => array ()
+				);
 				break;
 		}
 
+		$keyboard = json_encode($keyboard, JSON_UNESCAPED_UNICODE);
 		return $keyboard;
 	}
 
