@@ -50,33 +50,42 @@ abstract class CommandHandler
 		// Список доступных команд
 		0 => 'sendHelp',
 		'/help' => 'sendHelp',
+		'помощь' => 'sendHelp',
+		'списоккоманд' => 'sendHelp',
 
 		// Расписание на сегодня
 		1 => 'sendScheduleForToday',
 		'/today' => 'sendScheduleForToday',
+		'насегодня' => 'sendScheduleForToday',
 
 		// Расписание на завтра
 		2 => 'sendScheduleForTomorrow',
 		'/tomorrow' => 'sendScheduleForTomorrow',
+		'назавтра' => 'sendScheduleForTomorrow',
 
 		// Расписание на текущую неделю
 		3 => 'sendScheduleForThisWeek',
-		'/thisweek' => 'sendScheduleForThisWeek',
+		'/currentweek' => 'sendScheduleForThisWeek',
+		'наэтунеделю' => 'sendScheduleForThisWeek',
 
 		// Расписание на текущую неделю
 		4 => 'sendScheduleForNextWeek',
 		'/nextweek' => 'sendScheduleForNextWeek',
+		'наследующуюнеделю' => 'sendScheduleForNextWeek',
 
 		// Изменение группы
 		5 => 'changeUserGroup',
 		'/changegroup' => 'changeUserGroup',
+		'изменитьгруппу' => 'changeUserGroup',
 
 		// Изменение группы
 		6 => 'askNewQuestion',
 		'/askquestion' => 'askNewQuestion',
+		'задатьвопрос' => 'askNewQuestion',
 
 		// Отмена ввода
-		'/cancel' => 'cancelInput'
+		'/cancel' => 'cancelInput',
+		'отмена' => 'cancelInput'
 	);
 
 	/**
@@ -95,9 +104,15 @@ abstract class CommandHandler
 	 */
 	protected $expectedInputTypes = array (
 		// Название группы
-		'group_name' => 'inputUserGroup',
+		'group_name' => array (
+			'method_name' => 'inputUserGroup',
+			'allowed_methods' => array ('cancelInput', 'askNewQuestion')
+		),
 		// Текст вопроса
-		'question_text' => 'inputQuestionText'
+		'question_text' => array (
+			'method_name' => 'inputQuestionText',
+			'allowed_methods' => array ('cancelInput')
+		)
 	);
 
 	/**
@@ -108,9 +123,9 @@ abstract class CommandHandler
 	protected $answers = array (
 		// Сообщения
 		'greetings' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br>Чтобы получить помощь используйте команду /help',
-		'greetings_with_send_group_name' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br><br>⚠ Теперь пришлите свою группу.<br>Например: ИУ1-11Б, К3-12Б и др.<br><br>Чтобы получить помощь, используйте команду /help',
+		'greetings_with_send_group_name' => 'Здравствуйте, Вы были успешно зарегестрированы в системе :)<br><br>⚠ Теперь пришлите свою группу.<br>Например: ИУ1-11Б, К3-12Б и др.<br><br>❓ Если вы хотите задать вопрос, пришлите в ответ "Отмена", а затем соответствующую команду.<br><br>Чтобы получить справку (список команд), используйте команду /help',
 		'canceled' => 'Отменено',
-		'available_commands' => 'Доступные команды<br><br>0. Список команд (/help)<br>1. На сегодня (/today [группа])<br>2. На завтра (/tomorrow [группа])<br>3. На эту неделю (/thisWeek [группа])<br>4. На следующую неделю (/nextWeek [группа])<br>5. Изменить группу (/changeGroup [группа])<br>6. Задать вопрос (/askQuestion)<br><br>Можно присылать цифрами, русским текстом или командами, указанными в скобках',
+		'available_commands' => 'Доступные команды<br><br>0. Список команд (помощь, /help)<br>1. На сегодня (/today [группа])<br>2. На завтра (/tomorrow [группа])<br>3. На эту неделю (/thisWeek [группа])<br>4. На следующую неделю (/nextWeek [группа])<br>5. Изменить группу (/changeGroup [группа])<br>6. Задать вопрос (/askQuestion)<br><br>Можно присылать цифрами, русским текстом или командами, указанными в скобках',
 
 		// Уведомления
 		'send_group_name' => 'Пришлите название своей группы.<br>Например: ИУ1-11Б, К3-12Б и др.',
@@ -159,19 +174,18 @@ abstract class CommandHandler
 		// Если от пользователя не ожидается какой-либо ввод, передаём команду её обработчику
 		if (is_null ($this->user->data->expected_input)) {
 			if (isset ($this->commands [$this->command['name']]))
-				$message = $this->{$this->commands [$this->command['name']]}();
+				$message = $this->{$this->commands[$this->command['name']]}();
 			else
 				$message = null;
 		// Если от пользователя ожидается какой-либо ввод, обрабатываем его
 		} else {
-			if (isset ($this->commands [$this->command['name']]) && $this->commands [$this->command['name']] == 'cancelInput')
-				$message = $this->{$this->commands [$this->command['name']]}();
-			else {
-				if (isset ($this->expectedInputTypes [$this->user->data->expected_input]))
-					$message = $this->{$this->expectedInputTypes [$this->user->data->expected_input]}();
+			if (isset($this->expectedInputTypes[$this->user->data->expected_input]))
+				if (isset($this->commands[$this->command['name']]) && array_search($this->commands[$this->command['name']], $this->expectedInputTypes[$this->user->data->expected_input]['allowed_methods'] ?? array()) !== false)
+					$message = $this->{$this->commands[$this->command['name']]}();
 				else
-					$message = $this->createMessage($this->answers['undefined_expected_input']);
-			}
+					$message = $this->{$this->expectedInputTypes[$this->user->data->expected_input]['method_name']}();
+			else
+				$message = $this->createMessage($this->answers['undefined_expected_input']);
 		}
 
 		return $message;
@@ -262,7 +276,7 @@ abstract class CommandHandler
 			return null;
 
 		$this->user->update('expected_input', null);
-		return $this->createMessage($this->answers['canceled'], array ('keyboard' => 'full'));
+		return $this->createMessage($this->answers['canceled'], array ('keyboard_type' => 'full'));
 	}
 
 
@@ -272,7 +286,7 @@ abstract class CommandHandler
 	 */
 	protected function sendHelp () : array
 	{
-		return $this->createMessage($this->answers['available_commands'], array ('keyboard' => 'full'));
+		return $this->createMessage($this->answers['available_commands'], array ('keyboard_type' => 'full'));
 	}
 
 	/**
@@ -284,7 +298,7 @@ abstract class CommandHandler
 	{
 		$schedule = $this->getGroupSchedule();
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
-			return $this->createMessage($this->answers[$schedule['error']]);
+			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
 		if (date('W')%2)
 			$message = 'Вы учитесь по знаменателю';
@@ -303,7 +317,7 @@ abstract class CommandHandler
 
 		$message .= $this->scheduleViewer->getToday($schedule);
 
-		return $this->createMessage($message, array ('keyboard' => 'full'));
+		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
 
 	/**
@@ -315,7 +329,7 @@ abstract class CommandHandler
 	{
 		$schedule = $this->getGroupSchedule();
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
-			return $this->createMessage($this->answers[$schedule['error']]);
+			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
 		if (date('W', time() + 86400)%2)
 			$message = 'Завтра вы будете учиться по знаменателю';
@@ -334,7 +348,7 @@ abstract class CommandHandler
 
 		$message .= $this->scheduleViewer->getTomorrow($schedule);
 
-		return $this->createMessage($message, array ('keyboard' => 'full'));
+		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
 
 	/**
@@ -346,7 +360,7 @@ abstract class CommandHandler
 	{
 		$schedule = $this->getGroupSchedule();
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
-			return $this->createMessage($this->answers[$schedule['error']]);
+			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
 		if (date('W')%2)
 			$message = 'На этой неделе вы учитесь по знаменателю';
@@ -365,7 +379,7 @@ abstract class CommandHandler
 
 		$message .= $this->scheduleViewer->getWeek($schedule);
 
-		return $this->createMessage($message, array ('keyboard' => 'full'));
+		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
 
 	/**
@@ -377,7 +391,7 @@ abstract class CommandHandler
 	{
 		$schedule = $this->getGroupSchedule();
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
-			return $this->createMessage($this->answers[$schedule['error']]);
+			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
 		if (date('W', time()+86400*7)%2)
 			$message = 'На следующей неделе вы будете учиться по знаменателю';
@@ -396,7 +410,7 @@ abstract class CommandHandler
 
 		$message .= $this->scheduleViewer->getWeek($schedule, true);
 
-		return $this->createMessage($message, array ('keyboard' => 'full'));
+		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
 
 	/**
@@ -411,7 +425,7 @@ abstract class CommandHandler
 
 		$this->user->update('expected_input', 'group_name');
 
-		return $this->createMessage($this->answers['send_group_name'], array ('keyboard' => 'cancel'));
+		return $this->createMessage($this->answers['send_group_name'], array ('keyboard_type' => 'cancel'));
 	}
 
 	/**
@@ -421,7 +435,7 @@ abstract class CommandHandler
 	protected function askNewQuestion () : array
 	{
 		$this->user->update('expected_input', 'question_text');
-		return $this->createMessage($this->answers['send_question_text'], array ('keyboard' => 'cancel'));
+		return $this->createMessage($this->answers['send_question_text'], array ('keyboard_type' => 'cancel'));
 	}
 
 	/**
@@ -438,11 +452,11 @@ abstract class CommandHandler
 			$group = Schedule::searchGroup($groupName);
 
 		if (!$group)
-			return $this->createMessage($this->answers['cannot_find_group']);
+			return $this->createMessage($this->answers['cannot_find_group'], array ('keyboard_type' => 'cancel'));
 
 		$this->user->update('group_symbolic', $group['symbolic']);
 		$this->user->update('expected_input', null);
-		return $this->createMessage('Ваша группа была успешно изменена на ' . $group['caption'], array ('keyboard' => 'full'));
+		return $this->createMessage('Ваша группа была успешно изменена на ' . $group['caption'], array ('keyboard_type' => 'full'));
 	}
 
 	/**
