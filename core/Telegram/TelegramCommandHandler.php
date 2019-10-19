@@ -29,6 +29,8 @@ class TelegramCommandHandler extends CommandHandler
 	{
 		parent::__construct();
 
+		$this->scheduleViewer = new TelegramScheduleViewer();
+
 		$this->chatID  = $chatID;
 		$this->command = $this->prepareCommand($command);
 	}
