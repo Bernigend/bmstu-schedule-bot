@@ -4,6 +4,8 @@
 namespace Core\Schedule;
 
 
+use Core\Config;
+use Core\DataBase as DB;
 use Exception;
 
 class Schedule
@@ -61,6 +63,37 @@ class Schedule
 			throw new Exception ('Cant`d decode JSON of search group data: ' . print_r($scheduleJSON, true));
 
 		return $scheduleData;
+	}
+
+	/**
+	 * Возвращает at_denominator/at_numerator, для определения по какой неделе выводить расписание
+	 *
+	 * @param bool $usualTime
+	 * @param bool $nextWeek
+	 * @return string
+	 */
+	public static function getWeekName (bool $usualTime, bool $nextWeek = false) : string
+	{
+		$year = (date('n') > 8) ? date('Y') : date('Y')-1;
+
+		$week = strtotime("first monday of September {$year}");
+		$week = date('W', (($nextWeek) ? time()+86400*7 : time())) - date('W', $week) + 1;
+		// определяем чётность недели
+		$week = $week % 2;
+
+		if (!$usualTime)
+			$week = (int)!$week; // меняем значение на обратное
+
+		// определяем по какой неделе выводить расписание с помощью её чётности
+		// 1 - по числителю, 2 - по знаменателю
+		$week = (int)!$week + 1;
+
+		if ($week == 1)
+			$week = 'at_numerator';
+		else
+			$week = 'at_denominator';
+
+		return $week;
 	}
 
 	/**
