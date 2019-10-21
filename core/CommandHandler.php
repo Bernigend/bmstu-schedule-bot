@@ -47,6 +47,9 @@ abstract class CommandHandler
 	 * @var array
 	 */
 	protected $commands = array (
+		// Начало использования бота
+		'начать' => 'startUsingBot',
+
 		// Список доступных команд
 		0 => 'sendHelp',
 		'/help' => 'sendHelp',
@@ -130,6 +133,7 @@ abstract class CommandHandler
 		// Уведомления
 		'send_group_name' => 'Пришлите название своей группы.<br>Например: ИУ1-11Б, К3-12Б и др.',
 		'send_question_text' => 'Пришлите свой вопрос, он будет передан разработчику',
+		'you_have_already_registered' => 'Вы уже зарегестрированы в системе',
 
 		// Ошибки
 		'undefined_command' => 'Неизвестная команда, попробуйте изменить запрос :)',
@@ -265,6 +269,15 @@ abstract class CommandHandler
 	 * ОБРАБОТЧИКИ КОМАНД
 	 ******************************************************************************/
 
+	/**
+	 * Обработчик команды "Начать"
+	 * @return array
+	 */
+	public function startUsingBot () : array
+	{
+		return $this->createMessage($this->answers['you_have_already_registered'], array ('keyboard_type' => 'full'));
+	}
+
 
 	/**
 	 * Обработчик команды "Отмена"
@@ -300,10 +313,12 @@ abstract class CommandHandler
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
 			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
-		if (date('W')%2)
-			$message = 'Вы учитесь по знаменателю';
-		else
+		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+		if ($week == 'at_numerator')
 			$message = 'Вы учитесь по числителю';
+		else
+			$message = 'Вы учитесь по знаменателю';
+
 		$message .= '<br>';
 
 		if (date('n') > 8)
@@ -312,10 +327,19 @@ abstract class CommandHandler
 			$message .= 'Семестр: 2';
 		$message .= '<br>';
 
-		$message .= 'Группа: ' . $schedule['data']['group']['name'] . '<br><br>';
+		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')<br><br>';
 		$message .= ' ---- ---- <br><br>';
 
-		$message .= $this->scheduleViewer->getToday($schedule);
+		$message .= $this->scheduleViewer->getToday($schedule) . '<br><br>';
+		$message .= ' ---- ---- <br><br>';
+
+		if ($schedule['data']['group']['city'] == 'MF') {
+			$message .= '🏛 Мероприятия:<br>';
+			$message .= $this->scheduleViewer->getEventsForDay(date('Y-m-d'), $schedule['data']['group']['city']) . '<br><br>';
+			$message .= ' ---- ---- <br><br>';
+		}
+
+		$message .= 'Для вывода списка команд, пришлите Помощь (/help)';
 
 		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
@@ -331,10 +355,11 @@ abstract class CommandHandler
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
 			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
-		if (date('W', time() + 86400)%2)
-			$message = 'Завтра вы будете учиться по знаменателю';
-		else
+		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+		if ($week == 'at_numerator')
 			$message = 'Завтра вы будете учиться по числителю';
+		else
+			$message = 'Завтра вы будете учиться по знаменателю';
 		$message .= '<br>';
 
 		if (date('n', time() + 86400) > 8)
@@ -346,7 +371,16 @@ abstract class CommandHandler
 		$message .= 'Группа: ' . $schedule['data']['group']['name'] . '<br><br>';
 		$message .= ' ---- ---- <br><br>';
 
-		$message .= $this->scheduleViewer->getTomorrow($schedule);
+		$message .= $this->scheduleViewer->getTomorrow($schedule) . '<br><br>';
+		$message .= ' ---- ---- <br><br>';
+
+		if ($schedule['data']['group']['city'] == 'MF') {
+			$message .= '🏛 Мероприятия:<br>';
+			$message .= $this->scheduleViewer->getEventsForDay(date('Y-m-d', time()+86400), $schedule['data']['group']['city']) . '<br><br>';
+			$message .= ' ---- ---- <br><br>';
+		}
+
+		$message .= 'Для вывода списка команд, пришлите Помощь (/help)';
 
 		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
@@ -362,10 +396,11 @@ abstract class CommandHandler
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
 			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
-		if (date('W')%2)
-			$message = 'На этой неделе вы учитесь по знаменателю';
-		else
+		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+		if ($week == 'at_numerator')
 			$message = 'На этой неделе вы учитесь по числителю';
+		else
+			$message = 'На этой неделе вы учитесь по знаменателю';
 		$message .= '<br>';
 
 		if (date('n') > 8)
@@ -377,7 +412,16 @@ abstract class CommandHandler
 		$message .= 'Группа: ' . $schedule['data']['group']['name'] . '<br><br>';
 		$message .= ' ---- ---- <br><br>';
 
-		$message .= $this->scheduleViewer->getWeek($schedule);
+		$message .= $this->scheduleViewer->getWeek($schedule) . '<br><br>';
+		$message .= ' ---- ---- <br><br>';
+
+		if ($schedule['data']['group']['city'] == 'MF') {
+			$message .= '🏛 Мероприятия:<br>';
+			$message .= $this->scheduleViewer->getEventsForWeek(false, $schedule['data']['group']['city']) . '<br><br>';
+			$message .= ' ---- ---- <br><br>';
+		}
+
+		$message .= 'Для вывода списка команд, пришлите Помощь (/help)';
 
 		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
@@ -393,10 +437,11 @@ abstract class CommandHandler
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
 			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
-		if (date('W', time()+86400*7)%2)
-			$message = 'На следующей неделе вы будете учиться по знаменателю';
-		else
+		$week = Schedule::getWeekName($schedule['data']['usual_time'], true);
+		if ($week == 'at_numerator')
 			$message = 'На следующей неделе вы будете учиться по числителю';
+		else
+			$message = 'На следующей неделе вы будете учиться по знаменателю';
 		$message .= '<br>';
 
 		if (date('n', time()+86400*7) > 8)
@@ -408,7 +453,16 @@ abstract class CommandHandler
 		$message .= 'Группа: ' . $schedule['data']['group']['name'] . '<br><br>';
 		$message .= ' ---- ---- <br><br>';
 
-		$message .= $this->scheduleViewer->getWeek($schedule, true);
+		$message .= $this->scheduleViewer->getWeek($schedule, true) . '<br><br>';
+		$message .= ' ---- ---- <br><br>';
+
+		if ($schedule['data']['group']['city'] == 'MF') {
+			$message .= '🏛 Мероприятия:<br>';
+			$message .= $this->scheduleViewer->getEventsForWeek(true, $schedule['data']['group']['city']) . '<br><br>';
+			$message .= ' ---- ---- <br><br>';
+		}
+
+		$message .= 'Для вывода списка команд, пришлите Помощь (/help)';
 
 		return $this->createMessage($message, array ('keyboard_type' => 'full'));
 	}
