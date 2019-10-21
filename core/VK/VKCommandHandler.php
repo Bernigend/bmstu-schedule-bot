@@ -25,18 +25,6 @@ class VKCommandHandler extends CommandHandler
 	 */
 	public function __construct (int $peerID, string $command)
 	{
-		$this->localCommands = array (
-			'отмена' => 'cancelInput',
-			'помощь' => 'sendHelp',
-			'списоккоманд' => 'sendHelp',
-			'насегодня' => 'sendScheduleForToday',
-			'назавтра' => 'sendScheduleForTomorrow',
-			'наэтунеделю' => 'sendScheduleForThisWeek',
-			'наследующуюнеделю' => 'sendScheduleForNextWeek',
-			'изменитьгруппу' => 'changeUserGroup',
-			'задатьвопрос' => 'askNewQuestion',
-		);
-
 		parent::__construct();
 
 		$this->peerID  = $peerID;
@@ -54,7 +42,7 @@ class VKCommandHandler extends CommandHandler
 		$userID = VKUser::find ($this->peerID);
 		if (!$userID) {
 			VKUser::register($this->peerID, 'group_name');
-			VKBot::sendMessage($this->peerID, $this->answers['greetings_with_send_group_name']);
+			VKBot::sendMessage($this->peerID, $this->answers['greetings_with_send_group_name'], array ('keyboard' => $this->getKeyboard('cancel')));
 			return;
 		}
 
@@ -80,7 +68,7 @@ class VKCommandHandler extends CommandHandler
 	 */
 	protected function createMessage(string $message, array $params = array()) : array
 	{
-		$params['keyboard'] = $this->getKeyboard($params['keyboard'] ?? null);
+		$params['keyboard'] = $this->getKeyboard($params['keyboard_type'] ?? null);
 
 		return array (
 			'text' => $message,

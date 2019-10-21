@@ -77,13 +77,13 @@ class ScheduleViewer
 			$personExists = false;
 
 			if (!empty($pair['subject']))
-				$return .= $pair['subject'];
+				$return .= ' - ' . $pair['subject'];
 
 			if (!empty($pair['prefix']))
 				$return .= ' ' . $pair['prefix'];
 
 			if (!empty($pair['person'])) {
-				$return .= '<br>' . $pair['person'];
+				$return .= '<br> - ' . $pair['person'];
 				$personExists = true;
 			}
 
@@ -91,7 +91,7 @@ class ScheduleViewer
 				if ($personExists)
 					$return .= ' | ' . $pair['cabinet'];
 				else
-					$return .= '<br>' . $pair['cabinet'];
+					$return .= '<br> - ' . $pair['cabinet'];
 			}
 
 			$return .= '<br>';

@@ -29,6 +29,8 @@ class TelegramCommandHandler extends CommandHandler
 	{
 		parent::__construct();
 
+		$this->scheduleViewer = new TelegramScheduleViewer();
+
 		$this->chatID  = $chatID;
 		$this->command = $this->prepareCommand($command);
 	}
@@ -68,8 +70,7 @@ class TelegramCommandHandler extends CommandHandler
 	 */
 	protected function createMessage (string $message, array $params = array()) : array
 	{
-		if (isset($params['keyboard']))
-			$params['keyboard'] = $this->getKeyboard($params['keyboard']);
+		$params['keyboard'] = $this->getKeyboard($params['keyboard_type'] ?? null);
 
 		return array (
 			'text' => $message,
@@ -85,7 +86,66 @@ class TelegramCommandHandler extends CommandHandler
 	 */
 	protected function getKeyboard (?string $type)
 	{
-		return null;
+		switch ($type) {
+			case 'full':
+				$keyboard = array (
+					'one_time_keyboard' => false,
+					'buttons' => array (
+						array (
+							array (
+								'text' => 'На сегодня'
+							),
+							array (
+								'text' => 'На завтра'
+							)
+						),
+						array (
+							array (
+								'text' => 'На эту неделю'
+							),
+							array (
+								'text' => 'На следующую неделю'
+							)
+						),
+						array (
+							array (
+								'text' => 'Изменить группу'
+							)
+						),
+						array (
+							array (
+								'text' => 'Задать вопрос'
+							),
+							array (
+								'text' => 'Список команд'
+							)
+						)
+					)
+				);
+				break;
+
+			case 'cancel':
+				$keyboard = array (
+					'one_time_keyboard' => false,
+					'buttons' => array (
+						array (
+							array (
+								'text' => 'Отмена'
+							)
+						)
+					)
+				);
+				break;
+
+			default:
+				$keyboard = array (
+					'one_time_keyboard' => true,
+					'buttons'  => array ()
+				);
+				break;
+		}
+
+		return $keyboard;
 	}
 
 	/******************************************************************************
