@@ -89,43 +89,61 @@ class Config
 	 * НАСТРОЙКА ПОДКЛЮЧЕНИЯ К VK API
 	 ***********************************************************/
 
-	/**
-	 * Токен подтверждения сервером, выданный VK
-	 * @var string
-	 */
-	public const VK_API_CONFIRMATION_TOKEN = '';
 
-	/**
-	 * Токен доступа к функциям сообщества, выданный VK
-	 * @var string
-	 */
-	public const VK_API_ACCESS_TOKEN = '';
+	 /**
+     	 * Хранит данные обо всех сообществах, которые имеют доступ к боту
+     	 * @var array
+     	 */
+     	public const VK_DATA = array (
+     		'id186813513' => array (
+     			'confirmation_token' => '',
+     			'access_token' => '',
+     			'secret_key'   => ''
+     		),
+     		'id61281268' => array (
+     			'confirmation_token' => '',
+     			'access_token' => '',
+     			'secret_key'   => ''
+     		)
+     	);
 
-	/**
-	 * Секретный ключ, который будет присылать VK
-	 * Укажите значение null, чтобы выключить проверку секретного ключа
-	 * @var string|null
-	 */
-	public const VK_API_SECRET_KEY = '';
+     	/**
+     	 * Токен подтверждения сервером, выданный VK
+     	 * @var string
+     	 */
+     //	public const VK_API_CONFIRMATION_TOKEN = '';
 
-	/**
-	 * ID группы VK, в которой будет работать бот
-	 * @var integer
-	 */
-	public const VK_API_GROUP_ID = '';
+     	/**
+     	 * Токен доступа к функциям сообщества, выданный VK
+     	 * @var string
+     	 */
+     //	public const VK_API_ACCESS_TOKEN = '';
 
-	/**
-	 * Версия VK API
-	 * @var string
-	 */
-	public const VK_API_VERSION = '5.101';
+     	/**
+     	 * Секретный ключ, который будет присылать VK
+     	 * Укажите значение null, чтобы выключить проверку секретного ключа
+     	 * @var string|null
+     	 */
+     //	public const VK_API_SECRET_KEY = '';
 
-	/**
-	 * Идентификатор беседы разработчиков, куда прислылать различные уведомления
-	 * Берётся из базы данных
-	 * @var integer
-	 */
-	public const VK_DEVELOPERS_TALK_PEER_ID = '';
+     	/**
+     	 * ID группы VK, в которой будет работать бот
+     	 * @var integer
+     	 */
+     //	public const VK_API_GROUP_ID = '';
+
+     	/**
+     	 * Версия VK API по умолчанию
+     	 * @var string
+     	 */
+     	public const VK_API_DEFAULT_VERSION = '5.101';
+
+     	/**
+     	 * Идентификатор беседы разработчиков, куда прислылать различные уведомления
+     	 * Берётся из базы данных
+     	 * @var integer
+     	 */
+     	public const VK_DEVELOPERS_TALK_PEER_ID = '';
 
 
 	/***********************************************************
