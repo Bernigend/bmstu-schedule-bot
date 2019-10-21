@@ -4,10 +4,21 @@
 namespace Core\Telegram;
 
 
+use Core\Config;
+use Core\DataBase as DB;
 use Core\Schedule\ScheduleViewer;
+use Exception;
 
 class TelegramScheduleViewer extends ScheduleViewer
 {
+	/**
+	 * Возвращает расписание на день
+	 *
+	 * @param array $schedule
+	 * @param int $weekDay
+	 * @param string $weekNum
+	 * @return string
+	 */
 	protected function getDay (array $schedule, int $weekDay, string $weekNum)
 	{
 		$weekDays = array ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье');
@@ -40,6 +51,78 @@ class TelegramScheduleViewer extends ScheduleViewer
 					$return .= '<br> - ' . $pair['cabinet'];
 			}
 
+			$return .= '<br>';
+		}
+
+		return $return;
+	}
+
+	/**
+	 * Возвращает расписание мероприятий на день по дате
+	 *
+	 * @param string $date
+	 * @param string $city
+	 * @return string
+	 * @throws Exception
+	 */
+	public function getEventsForDay (string $date, string $city = 'Moscow') : string
+	{
+		$events = DB::getAll('SELECT * FROM `' . Config::DB_PREFIX . 'events` WHERE `city` = ? AND `date` = ? ORDER BY `time`', array($city, $date));
+		$return = '';
+		if ($events) {
+			foreach ($events as $eventKey => $event) {
+				$return .= $eventKey+1 . '. ';
+				$return .= (!empty($event['time']) ? substr($event['time'], 0, 5) . ' - ' : '');
+				$return .= "{$event['title']}";
+				$return .= (!empty($event['place'])) ? ' - (' . $event['place'] . ')' : '';
+				$return .= (!empty($event['href'])) ? ' - [подробнее](' . $event['href'] . ')': '';
+				$return .= '<br>';
+			}
+			return $return;
+		} else return 'Ничего не запланировано';
+	}
+
+	/**
+	 * Возвращает расписание мероприятий на текущую/следующую неделю
+	 *
+	 * @param bool $nextWeek
+	 * @param string $city
+	 * @return string
+	 * @throws Exception
+	 */
+	public function getEventsForWeek (bool $nextWeek = false, string $city = 'Moscow') : string
+	{
+		if (!$nextWeek)
+			$dateStart = date('Y.m.d', time()-86400*(date('N')-1));
+		else
+			$dateStart = date('Y.m.d', time()+(7-date('N')+1)*86400);
+
+		if (!$nextWeek)
+			$dateEnd = date('Y.m.d', time()+86400*(7-date('N')));
+		else
+			$dateEnd = date('Y.m.d', time()+86400*(7+(7-date('N'))));
+
+		$events = DB::getAll('SELECT * FROM `' . Config::DB_PREFIX . 'events` WHERE `city` = ? AND `date` >= ? AND `date` <= ? ORDER BY `date`, `time`', array ($city, $dateStart, $dateEnd));
+		if (!$events)
+			return 'Ничего не запланировано';
+
+		$moths = array (1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля', 5 => 'мая', 6 => 'июня', 7 => 'июля', 8 => 'августа', 9 => 'сентября', 10 => 'октября', 11 => 'ноября', 12 => 'декабря');
+		$return = '';
+		$lastDate = '';
+		$eventKey = 1;
+
+		foreach ($events as $event) {
+			if ($event['date'] != $lastDate) {
+				$time = strtotime($event['date']);
+				$return .= '<br> 📍 ' . date ('d', $time) . ' ' . $moths[date('n', $time)] . '<br>';
+				$lastDate = $event['date'];
+				$eventKey = 1;
+			}
+			$return .= $eventKey++ . '. ';
+			$return .= (!empty($event['time']) ? substr($event['time'], 0, 5) . ' - ' : '');
+			$return .= "{$event['title']}";
+			$return .= (!empty($event['place'])) ? ' - (' . $event['place'] . ')' : '';
+			$return .=  (!empty($event['href'])) ? ' - [подробнее](' . $event['href'] . ')': '';
 			$return .= '<br>';
 		}
 
