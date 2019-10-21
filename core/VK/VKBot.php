@@ -23,14 +23,21 @@ class VKBot extends VKCallbackApiServerHandler
 	 *
 	 * @var VKApiClient
 	 */
-	protected static $vkApiClient;
+	protected $vkApiClient;
+
+	/**
+	 * Конфигурация бота
+	 *
+	 * @var array
+	 */
+	public $config = null;
 
 	/**
 	 * VKBot constructor.
 	 */
 	public function __construct ()
 	{
-		static::initVKApiClient();
+		$this->initVKApiClient();
 	}
 
 	/**
@@ -65,7 +72,7 @@ class VKBot extends VKCallbackApiServerHandler
 		if (!$this->checkSenderServer($groupId, $secret))
 			die ();
 
-		die (Config::VK_API_CONFIRMATION_TOKEN);
+		die ($this->config['confirmation_token']);
 	}
 
 	/**
@@ -95,7 +102,7 @@ class VKBot extends VKCallbackApiServerHandler
 		if (Config::QUEUE_ON) {
 			// TODO: добавление новой задачи в очередь
 		} else {
-			$commandHandler = new VKCommandHandler($eventData['peer_id'], $eventData['text']);
+			$commandHandler = new VKCommandHandler($this, $eventData['peer_id'], $eventData['text']);
 			$commandHandler->handle();
 		}
 	}
@@ -110,12 +117,12 @@ class VKBot extends VKCallbackApiServerHandler
 	 */
 	protected function checkSenderServer (int $groupId, ?string $secret) : bool
 	{
-		if (!is_null(Config::VK_API_SECRET_KEY))
-			if (strcmp($secret, Config::VK_API_SECRET_KEY) !== 0)
-				return false;
+		if (isset(Config::VK_DATA['id' . $groupId]))
+			$this->config = Config::VK_DATA['id' . $groupId];
 
-		if ($groupId !== Config::VK_API_GROUP_ID)
-			return false;
+		if (isset($this->config['secret_key']) && !is_null($this->config['secret_key']))
+			if (strcmp($secret, $this->config['secret_key']) !== 0)
+				return false;
 
 		return true;
 	}
@@ -140,9 +147,9 @@ class VKBot extends VKCallbackApiServerHandler
 	 * @throws \VK\Exceptions\VKApiException
 	 * @throws \VK\Exceptions\VKClientException
 	 */
-	public static function sendMessage (int $peerID, string $message, array $params = array ())
+	public function sendMessage (int $peerID, string $message, array $params = array ())
 	{
-		static::$vkApiClient->messages()->send(Config::VK_API_ACCESS_TOKEN, array (
+		$this->vkApiClient->messages()->send($this->config['access_token'], array (
 			'peer_id' => $peerID,
 			'message' => $message,
 			'keyboard' => $params['keyboard'] ?? '',
@@ -156,16 +163,16 @@ class VKBot extends VKCallbackApiServerHandler
 	 *
 	 * @return VKApiClient
 	 */
-	public static function getVKApiClient ()
+	public function getVKApiClient ()
 	{
-		return static::$vkApiClient;
+		return $this->vkApiClient;
 	}
 
 	/**
 	 * Инициализирует подключение к VK API
 	 */
-	public static function initVKApiClient () : void
+	public function initVKApiClient () : void
 	{
-		static::$vkApiClient = new VKApiClient(Config::VK_API_VERSION);
+		$this->vkApiClient = new VKApiClient(($this->config['api_version']) ?? Config::VK_API_DEFAULT_VERSION);
 	}
 }
