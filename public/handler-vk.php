@@ -14,5 +14,5 @@ if (is_null($event))
 	throw new Exception ('Decoded event is null...');
 
 // Запускаем бота
-$VkBot = new VKBot();
+$VkBot  = new VKBot();
 $VkBot->handle($event);

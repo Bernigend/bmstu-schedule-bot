@@ -11,6 +11,11 @@ use Exception;
 class VKCommandHandler extends CommandHandler
 {
 	/**
+	 * @var VKBot
+	 */
+	protected $bot;
+
+	/**
 	 * Идентификатор назначения (куда отправлять ответ)
 	 *
 	 * @var integer
@@ -20,13 +25,15 @@ class VKCommandHandler extends CommandHandler
 	/**
 	 * VKCommandHandler constructor.
 	 *
+	 * @param VKBot $vkBot
 	 * @param int $peerID - идентификатор назначения (куда отправлять ответ)
 	 * @param string $command - переданная пользователем команда
 	 */
-	public function __construct (int $peerID, string $command)
+	public function __construct (VKBot $vkBot, int $peerID, string $command)
 	{
 		parent::__construct();
 
+		$this->bot     = $vkBot;
 		$this->peerID  = $peerID;
 		$this->command = $this->prepareCommand($command);
 	}
@@ -42,7 +49,7 @@ class VKCommandHandler extends CommandHandler
 		$userID = VKUser::find ($this->peerID);
 		if (!$userID) {
 			VKUser::register($this->peerID, 'group_name');
-			VKBot::sendMessage($this->peerID, $this->answers['greetings_with_send_group_name'], array ('keyboard' => $this->getKeyboard('cancel')));
+			$this->bot->sendMessage($this->peerID, $this->answers['greetings_with_send_group_name'], array ('keyboard' => $this->getKeyboard('cancel')));
 			return;
 		}
 
@@ -55,7 +62,7 @@ class VKCommandHandler extends CommandHandler
 		if (is_null($message))
 			return;
 
-		VKBot::sendMessage($this->peerID, $message['text'], $message['params']);
+		$this->bot->sendMessage($this->peerID, $message['text'], $message['params']);
 		return;
 	}
 
@@ -201,7 +208,7 @@ class VKCommandHandler extends CommandHandler
 	protected function inputQuestionText() : array
 	{
 		// Получаем информацию о пользователе
-		$userInfo = VKBot::getVKApiClient()->users()->get(Config::VK_API_ACCESS_TOKEN, array (
+		$userInfo = $this->bot->getVKApiClient()->users()->get($this->bot->config['access_token'], array (
 			'user_ids' => $this->peerID,
 			'fields' => 'first_name', 'last_name'
 		));
@@ -210,9 +217,9 @@ class VKCommandHandler extends CommandHandler
 		$message .= 'Вопрос:<br>"' . $this->command['original'] . '"';
 
 		// Отправляем уведомление в беседу разработчиков
-		VKBot::sendMessage(Config::VK_DEVELOPERS_TALK_PEER_ID, $message);
+		$this->bot->sendMessage(Config::VK_DEVELOPERS_TALK_PEER_ID, $message);
 
 		$this->user->update('expected_input', null);
-		return $this->createMessage('Ваш вопрос был успешно отправлен.<br>С вами свяжутся в ближайшее время', array ('keyboard' => 'full'));
+		return $this->createMessage('Ваш вопрос был успешно отправлен.<br>С вами свяжутся в ближайшее время', array ('keyboard_type' => 'full'));
 	}
 }

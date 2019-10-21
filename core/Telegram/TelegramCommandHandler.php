@@ -46,7 +46,7 @@ class TelegramCommandHandler extends CommandHandler
 		$userID = TelegramUser::find ($this->chatID);
 		if (!$userID) {
 			TelegramUser::register($this->chatID, 'group_name');
-			TelegramBot::sendMessage($this->chatID, $this->answers['greetings_with_send_group_name']);
+			TelegramBot::sendMessage($this->chatID, $this->answers['greetings_with_send_group_name'], array ('keyboard' => $this->getKeyboard('cancel')));
 			return;
 		}
 
@@ -173,12 +173,12 @@ class TelegramCommandHandler extends CommandHandler
 				$message .= 'Вопрос:<br>"' . $this->command['original'] . '"';
 
 				// Отправляем уведомление в беседу разработчиков
-				VKBot::initVkApiClient();
-				VKBot::sendMessage(Config::VK_DEVELOPERS_TALK_PEER_ID, $message);
+				$vkBot = new VKBot();
+				$vkBot->sendMessage(Config::VK_DEVELOPERS_TALK_PEER_ID, $message);
 			}
 		);
 
 		$this->user->update('expected_input', null);
-		return $this->createMessage('Ваш вопрос был успешно отправлен.<br>С вами свяжутся в ближайшее время', array ('keyboard' => 'full'));
+		return $this->createMessage('Ваш вопрос был успешно отправлен.<br>С вами свяжутся в ближайшее время', array ('keyboard_type' => 'full'));
 	}
 }
