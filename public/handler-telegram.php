@@ -1,5 +1,6 @@
 <?php
 
+use Core\Config;
 use Core\Telegram\TelegramBot;
 use unreal4u\TelegramAPI\Telegram\Types\Update;
 
