@@ -14,6 +14,13 @@ if (json_last_error() !== JSON_ERROR_NONE)
 if (is_null($event))
 	throw new Exception ('Decoded event is null...');
 
+// Проверяем секретный токен
+$explodedURI = explode('/', $_SERVER['REQUEST_URI']);
+if ($explodedURI(count($explodedURI)-1) !== Config::TELEGRAM_API_ACCESS_TOKEN)
+	die();
+
+unset($explodedURI);
+
 // Запускаем бота
 $event = new Update($event);
 $VkBot = new TelegramBot();
