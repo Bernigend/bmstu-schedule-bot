@@ -69,15 +69,22 @@ class Schedule
 	 * Возвращает at_denominator/at_numerator, для определения по какой неделе выводить расписание
 	 *
 	 * @param bool $usualTime
+	 * @param bool $tomorrow
 	 * @param bool $nextWeek
 	 * @return string
 	 */
-	public static function getWeekName (bool $usualTime, bool $nextWeek = false) : string
+	public static function getWeekName (bool $usualTime, bool $tomorrow = false, bool $nextWeek = false) : string
 	{
 		$year = (date('n') > 8) ? date('Y') : date('Y')-1;
 
 		$week = strtotime("first monday of September {$year}");
-		$week = date('W', (($nextWeek) ? time()+86400*7 : time())) - date('W', $week) + 1;
+		if ($tomorrow)
+			$week = date('W', time()+86400) - date('W', $week) + 1;
+		elseif ($nextWeek)
+			$week = date('W', time()+86400*7) - date('W', $week) + 1;
+		else
+			$week = date('W', time()) - date('W', $week) + 1;
+
 		// определяем чётность недели
 		$week = $week % 2;
 
