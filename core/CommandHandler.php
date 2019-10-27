@@ -355,7 +355,7 @@ abstract class CommandHandler
 		if (isset ($schedule['error']) && isset($this->answers[$schedule['error']]))
 			return $this->createMessage($this->answers[$schedule['error']], array ('keyboard_type' => 'full'));
 
-		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+		$week = Schedule::getWeekName($schedule['data']['usual_time'], true);
 		if ($week == 'at_numerator')
 			$message = 'Завтра вы будете учиться по числителю';
 		else
