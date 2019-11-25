@@ -102,15 +102,17 @@ class Config
 	 * @var array
 	 */
 	public const VK_GROUPS = array (
-		'id186813513' => array (
+		'id12345678' => array (
 			'confirmation_token' => '',
 			'access_token' => '',
-			'secret_key'   => ''
+			'secret_key'   => '',
+			'developers_talk_peer_id' => '2000000001'
 		),
-		'id61281268' => array (
+		'id87654321' => array (
 			'confirmation_token' => '',
 			'access_token' => '',
-			'secret_key'   => ''
+			'secret_key'   => '',
+			'developers_talk_peer_id' => '2000000001'
 		)
 	);
 
