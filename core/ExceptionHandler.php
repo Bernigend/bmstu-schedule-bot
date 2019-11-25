@@ -24,9 +24,9 @@ class ExceptionHandler
 
 		// Логируем исключение
 		if (Config::LOG_ERRORS_TO_FILE)
-			error_log($messageToLog, 3, Config::ERRORS_LOG_FILE_DIRECTORY . date("d.m.Y") . '.txt');
+			error_log("[" . date('d.m.Y H:i:s') . "] " . $messageToLog . "\n\n", 3, Config::ERRORS_LOG_FILE_DIRECTORY . date("d.m.Y") . '.txt');
 		else
-			error_log($messageToLog);
+			error_log("[" . date('d.m.Y H:i:s') . "] " . $messageToLog . "\n\n");
 
 		// Выводим его на экран, если включён режим отладки
 		if (Config::DEBUG_ON) {
