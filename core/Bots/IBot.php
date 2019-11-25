@@ -19,5 +19,5 @@ interface IBot
 	 * @param $keyboardType - тип клавиатуры
 	 * @return bool
 	 */
-	public function sendMessage($destinationID, $message, $keyboardType): bool;
+	public function sendMessage($destinationID, $message, $keyboardType = null): bool;
 }
