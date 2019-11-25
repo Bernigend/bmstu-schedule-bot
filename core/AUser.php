@@ -10,7 +10,13 @@ abstract class AUser
 	 * Идентификатор пользователя в базе данных
 	 * @var integer
 	 */
-	public $DBid;
+	public $dbID;
+
+	/**
+	 * Идентификатор назначения (кому/куда отправлять ответные сообщения)
+	 * @var mixed
+	 */
+	public $destinationID;
 
 	/**
 	 * Символическое название группы
@@ -27,9 +33,10 @@ abstract class AUser
 	/**
 	 * AUser constructor.
 	 *
-	 * @param $id
+	 * @param $dbID - ID пользователя в базе данных
+	 * @param $destinationID - идентификатор назначения (куда/кому отправлять ответное сообщение)
 	 */
-	public abstract function __construct($id);
+	public abstract function __construct($dbID, $destinationID);
 
 	/**
 	 * Изменяет данные пользователя в базе данных
