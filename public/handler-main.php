@@ -1,9 +1,15 @@
 <?php
 
+$START_TIME = microtime(true);
+
 use Core\Config;
+use Core\Logger;
 
 // Подключаем автозагрузчик
 require_once '../vendor/autoload.php';
+
+// Запуск логера
+$BOT_LOG = new Logger('requests_' . date('d.m.Y') . '.log');
 
 // Если бот выключен на системном уровне - прекращаем работу
 if (!Config::BOT_SYSTEM_ONLINE)
