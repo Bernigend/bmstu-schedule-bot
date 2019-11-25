@@ -13,11 +13,14 @@ class VkUser extends AUser
 {
 	/**
 	 * AUser constructor.
-	 * @param $DBid - идентификатор пользователя из базы данных
+	 *
+	 * @param $dbID - ID пользователя в базе данных
+	 * @param $destinationID - идентификатор назначения (куда/кому отправлять ответное сообщение)
 	 */
-	public function __construct($DBid)
+	public function __construct($dbID, $destinationID)
 	{
-		$this->DBid = $DBid;
+		$this->dbID = $dbID;
+		$this->destinationID = $destinationID;
 	}
 
 	/**
@@ -30,7 +33,7 @@ class VkUser extends AUser
 	 */
 	public function update(string $column, $value): bool
 	{
-		DB::query('UPDATE `' . Config::DB_PREFIX . 'users_vk` SET `' . $column . '` = ? WHERE `id` = ?', array ($value, $this->DBid));
+		DB::query('UPDATE `' . Config::DB_PREFIX . 'users_vk` SET `' . $column . '` = ? WHERE `id` = ?', array ($value, $this->dbID));
 		return true;
 	}
 
@@ -41,7 +44,7 @@ class VkUser extends AUser
 	 */
 	public function loadData(): void
 	{
-		$data = DB::getRow('SELECT * FROM `' . Config::DB_PREFIX . 'users_vk` WHERE `id` = ?', array ($this->DBid));
+		$data = DB::getRow('SELECT * FROM `' . Config::DB_PREFIX . 'users_vk` WHERE `id` = ?', array ($this->dbID));
 		foreach ($data as $columnName => $value) {
 			$this->{$columnName} = $value;
 		}
