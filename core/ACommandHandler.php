@@ -277,6 +277,31 @@ abstract class ACommandHandler
 	}
 
 	/**
+	 * Отправляет статистику времени выполнения скрипта админам
+	 *
+	 * @throws Exception
+	 */
+	protected function sendStatistic(): void
+	{
+		if (array_search("peerID-{$this->user->destinationID}", Config::ADMIN_USERS) === false && array_search("chatID-{$this->user->destinationID}", Config::ADMIN_USERS) === false)
+			return;
+
+		DataBase::connect();
+
+		$minTime = DataBase::getOne('SELECT MIN(`script_time`) as min FROM `stats` WHERE `date` = ?', array(date('Y-m-d')));
+		$maxTime = DataBase::getOne('SELECT MAX(`script_time`) as max FROM `stats` WHERE `date` = ?', array(date('Y-m-d')));
+		$avgTime = DataBase::getOne('SELECT AVG(`script_time`) as avg FROM `stats` WHERE `date` = ?', array(date('Y-m-d')));
+
+		$message  = "Статистика запросов:\n\n";
+		$message .= "Min: {$minTime} sec\n";
+		$message .= "Max: {$maxTime} sec\n";
+		$message .= "Avg: " . round($avgTime, 4) . " sec\n";
+
+		$this->bot->sendMessage($this->user->destinationID, $message, 'full');
+		return;
+	}
+
+	/**
 	 * Обработчик команды "Изменить группу"
 	 *
 	 * @return void
