@@ -4,6 +4,8 @@
 namespace Core;
 
 
+use Exception;
+
 class Logger
 {
 	/**
@@ -37,6 +39,19 @@ class Logger
 	public function addToLog(string $value): void
 	{
 		$this->textLog .= $value;
+	}
+
+	/**
+	 * Добавляет время выполнения скрипта в базу данных
+	 *
+	 * @param float $seconds
+	 * @throws Exception
+	 */
+	public static function logScriptTime(float $seconds): void
+	{
+		DataBase::connect();
+		DataBase::query('INSERT INTO `stats` SET `date` = ?, `time` = ?, `script_time` = ?', array(date('Y-m-d'), date('H:i:s'), $seconds));
+		return;
 	}
 
 	/**
