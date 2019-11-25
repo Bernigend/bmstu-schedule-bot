@@ -79,7 +79,10 @@ class Command
 
 		// Отмена ввода
 		'/cancel' => 'cancelInput',
-		'отмена'  => 'cancelInput'
+		'отмена'  => 'cancelInput',
+
+		// Статистика бота (для админов)
+		'/stats' => 'sendStatistic'
 	);
 
 	/**
