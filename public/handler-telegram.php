@@ -1,9 +1,16 @@
 <?php
 
+use Core\Config;
 use Core\Telegram\TelegramBot;
 use unreal4u\TelegramAPI\Telegram\Types\Update;
 
 require_once 'handler-main.php';
+
+// Проверяем секретный токен
+$explodedURI = explode('/', $_SERVER['REQUEST_URI']);
+if ($explodedURI[count($explodedURI)-1] !== Config::TELEGRAM_API_ACCESS_TOKEN)
+	die();
+unset($explodedURI);
 
 // Декодируем полученное событие из JSON в объект
 $event = json_decode(file_get_contents('php://input'), true);

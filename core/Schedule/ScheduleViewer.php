@@ -30,7 +30,7 @@ class ScheduleViewer
 	 */
 	public function getTomorrow (array $schedule)
 	{
-		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+		$week = Schedule::getWeekName($schedule['data']['usual_time'], true);
 		return $this->getDay($schedule['data']['schedule_days'], date('N', time()+86400), $week);
 	}
 
@@ -43,7 +43,7 @@ class ScheduleViewer
 	 */
 	public function getWeek (array $schedule, bool $nextWeek = false)
 	{
-		$week = Schedule::getWeekName($schedule['data']['usual_time'], $nextWeek);
+		$week = Schedule::getWeekName($schedule['data']['usual_time'], false, $nextWeek);
 
 		$return = '';
 
@@ -119,7 +119,7 @@ class ScheduleViewer
 				$return .= (!empty($event['time']) ? substr($event['time'], 0, 5) . ' - ' : '');
 				$return .= "{$event['title']}";
 				$return .= (!empty($event['place'])) ? ' - (' . $event['place'] . ')' : '';
-				//$return .= (!empty($event['href'])) ? ' - ' . $event['href'] : '';
+				$return .= (!empty($event['href'])) ? ' - ' . $event['href'] : '';
 				$return .= '<br>';
 			}
 			return $return;
