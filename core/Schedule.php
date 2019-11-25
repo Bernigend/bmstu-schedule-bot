@@ -5,7 +5,6 @@ namespace Core;
 
 
 use Core\DataBase as DB;
-use Core\Entities\Event;
 use Exception;
 
 class Schedule
@@ -23,6 +22,9 @@ class Schedule
 	 */
 	public static function searchGroup(string $groupName)
 	{
+		global $BOT_LOG;
+		$start_time = microtime(true);
+
 		// Делаем запрос к API
 		$URI = 'https://b.bmstu.ru/api/search/' . urlencode($groupName);
 		$searchJSON = static::loadData($URI);
@@ -43,6 +45,8 @@ class Schedule
 				);
 		}
 
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog(" - Search group finished in " . round(microtime(true) - $start_time, 4) . " sec;\n");
+
 		return false;
 	}
 
@@ -55,10 +59,15 @@ class Schedule
 	 */
 	public static function loadSchedule(string $groupSymbolic)
 	{
+		global $BOT_LOG;
+		$start_time = microtime(true);
+
 		$scheduleJSON = static::loadData('https://b.bmstu.ru/api/schedule/' . urlencode($groupSymbolic));
 		$scheduleData = json_decode($scheduleJSON, true);
 		if (!$scheduleData)
 			throw new Exception ('Cant`d decode JSON of search group data: ' . print_r($scheduleJSON, true));
+
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog(" - Load schedule finished in " . round(microtime(true) - $start_time, 4) . " sec;\n");
 
 		return $scheduleData;
 	}
@@ -170,7 +179,7 @@ class Schedule
 			throw new Exception($error_msg);
 		}
 
-		Logger::log('schedule_load_data_' . date('d.m.Y') . '.log', 'URI: ' . $URI . '; Response: ' . substr(var_export($response, true), 0, 128) . '...');
+//		Logger::log('schedule_load_data_' . date('d.m.Y') . '.log', 'URI: ' . $URI . '; Response: ' . substr(var_export($response, true), 0, 128) . '...');
 
 		return $response;
 	}
