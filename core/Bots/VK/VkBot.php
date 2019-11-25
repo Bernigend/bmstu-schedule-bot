@@ -210,7 +210,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 			'random_id' => random_int(1, 999999999999)
 		));
 
-		if (isset($BOT_LOG)) $BOT_LOG->addToLog("Send message finished in " . (microtime(true) - $send_message_start) . " sec; Response: " . print_r($response, true) . ";\n");
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog(" - Send message finished in " . round(microtime(true) - $send_message_start, 4) . " sec; Response: " . print_r($response, true) . ";\n");
 
 		return true;
 	}
