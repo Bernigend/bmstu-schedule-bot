@@ -5,16 +5,29 @@ namespace Core\Bots\VK;
 
 
 use Core\ACommandHandler;
+use Core\Bots\IBot;
 use Core\Config;
 use Core\DataBase;
 use Core\Entities\Command;
 use Core\Entities\VkUser;
-use Core\Logger;
 use Exception;
 use VK\CallbackApi\Server\VKCallbackApiServerHandler;
 use VK\Client\VKApiClient;
+use VK\Exceptions\Api\VKApiMessagesCantFwdException;
+use VK\Exceptions\Api\VKApiMessagesChatBotFeatureException;
+use VK\Exceptions\Api\VKApiMessagesChatUserNoAccessException;
+use VK\Exceptions\Api\VKApiMessagesContactNotFoundException;
+use VK\Exceptions\Api\VKApiMessagesDenySendException;
+use VK\Exceptions\Api\VKApiMessagesKeyboardInvalidException;
+use VK\Exceptions\Api\VKApiMessagesPrivacyException;
+use VK\Exceptions\Api\VKApiMessagesTooLongForwardsException;
+use VK\Exceptions\Api\VKApiMessagesTooLongMessageException;
+use VK\Exceptions\Api\VKApiMessagesTooManyPostsException;
+use VK\Exceptions\Api\VKApiMessagesUserBlockedException;
+use VK\Exceptions\VKApiException;
+use VK\Exceptions\VKClientException;
 
-class VkBot extends VKCallbackApiServerHandler
+class VkBot extends VKCallbackApiServerHandler implements IBot
 {
 	/**
 	 * Доступ к VK API
@@ -83,6 +96,8 @@ class VkBot extends VKCallbackApiServerHandler
 	 */
 	public function messageNew(int $groupId, ?string $secret, array $eventData): bool
 	{
+		global $BOT_LOG;
+
 		if (!$this->checkSenderServer($groupId, $secret))
 			die ('Access denied');
 
@@ -97,14 +112,21 @@ class VkBot extends VKCallbackApiServerHandler
 
 		echo 'ok';
 
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog("VK: message_id={$eventData['id']}, peer_id={$eventData['peer_id']}, text='{$eventData['text']}';\n");
+
+		// Проверяем, был ли уже обработан запрос
 		$date = DataBase::getOne('SELECT `date` FROM `' . Config::DB_PREFIX . 'handled_messages_vk` WHERE `message_id` = ? AND `peer_id` = ?', array ($eventData['id'], $eventData['peer_id']));
 		if ($date) {
-			Logger::log('vk_handled_message_errors.log', 'The message with id=' . $eventData['id'] . ' AND peer_id=' . $eventData['peer_id'] . ' has already been processed ' . $date);
+			if (isset($BOT_LOG)) $BOT_LOG->addToLog("Message has already been processed at '{$date}';\n");
 			return false;
 		}
 
-		// Если бот отключён и пользователь не имеет администратрских прав
+		// Добавляем запрос в обработанные
+		DataBase::query('INSERT INTO `' . Config::DB_PREFIX . 'handled_messages_vk` SET `peer_id` = ?, `message_id` = ?', array($eventData['peer_id'], $eventData['id']));
+
+		// Если бот отключён и пользователь не имеет администраторских прав
 		if (!Config::BOT_ONLINE && !array_search('peerID-' . $eventData['peer_id'], Config::ADMIN_USERS)) {
+			if (isset($BOT_LOG)) $BOT_LOG->addToLog("Bot is offline and user has not admin privileges;\n");
 			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['bot_is_offline'], $this->getKeyboard('full'));
 			return true;
 		}
@@ -113,12 +135,13 @@ class VkBot extends VKCallbackApiServerHandler
 		$userId = VkUser::find($eventData['peer_id']);
 		if (!$userId) {
 			VkUser::register($eventData['peer_id'], 'group_name');
+			if (isset($BOT_LOG)) $BOT_LOG->addToLog("The user was registered;\n");
 			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['greetings_with_send_group_name'], $this->getKeyboard('cancel'));
 			return true;
 		}
 
 		// Инициализируем пользователя
-		$user = new VkUser($userId);
+		$user = new VkUser($userId, $eventData['peer_id']);
 		$user->loadData();
 
 		// Инициализируем команду пользователя
@@ -127,14 +150,9 @@ class VkBot extends VKCallbackApiServerHandler
 			return false;
 
 		// Передаём команду её обработчику
-		$commandHandler = new VkCommandHandler($command, $user, new VkViewer());
-		$commandAnswer  = $commandHandler->handle();
+		$commandHandler = new VkCommandHandler($this, $command, $user, new VkViewer());
+		$commandHandler->handle();
 
-		// Отправляем ответ
-		if (!is_null($commandAnswer))
-			$this->sendMessage($eventData['peer_id'], $commandAnswer->text, $this->getKeyboard($commandAnswer->keyboardType));
-
-		DataBase::query('INSERT INTO `' . Config::DB_PREFIX . 'handled_messages_vk` SET `peer_id` = ?, `message_id` = ?', array($eventData['peer_id'], $eventData['id']));
 		return true;
 	}
 
@@ -163,32 +181,38 @@ class VkBot extends VKCallbackApiServerHandler
 	 *
 	 * @param int $peerID
 	 * @param string $message
-	 * @param string $keyboard
-	 * @throws \VK\Exceptions\Api\VKApiMessagesCantFwdException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesChatBotFeatureException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesChatUserNoAccessException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesContactNotFoundException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesDenySendException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesKeyboardInvalidException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesPrivacyException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesTooLongForwardsException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesTooLongMessageException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesTooManyPostsException
-	 * @throws \VK\Exceptions\Api\VKApiMessagesUserBlockedException
-	 * @throws \VK\Exceptions\VKApiException
-	 * @throws \VK\Exceptions\VKClientException
+	 * @param string $keyboardType
+	 * @return bool
+	 * @throws VKApiMessagesCantFwdException
+	 * @throws VKApiMessagesChatBotFeatureException
+	 * @throws VKApiMessagesChatUserNoAccessException
+	 * @throws VKApiMessagesContactNotFoundException
+	 * @throws VKApiMessagesDenySendException
+	 * @throws VKApiMessagesKeyboardInvalidException
+	 * @throws VKApiMessagesPrivacyException
+	 * @throws VKApiMessagesTooLongForwardsException
+	 * @throws VKApiMessagesTooLongMessageException
+	 * @throws VKApiMessagesTooManyPostsException
+	 * @throws VKApiMessagesUserBlockedException
+	 * @throws VKApiException
+	 * @throws VKClientException
 	 */
-	protected function sendMessage(int $peerID, string $message, string $keyboard = null): void
+	public function sendMessage($peerID, $message, $keyboardType = null): bool
 	{
+		global $BOT_LOG;
+		$send_message_start = microtime(true);
+
 		$response = $this->vkApiClient->messages()->send($this->config['access_token'], array (
 			'peer_id'  => $peerID,
 			'message'  => $message,
-			'keyboard' => $keyboard,
+			'keyboard' => $this->getKeyboard($keyboardType),
 			'dont_parse_links' => 1,
 			'random_id' => random_int(1, 999999999999)
 		));
 
-		Logger::log('vk_send_messages_' . date('d.m.Y') . '.log', 'peerID-' . $peerID . '; Message strlen: ' . strlen($message) . '; Message: "' . substr($message, 0, 128) . '..."; Response: ' . print_r($response, true));
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog("Send message finished in " . (microtime(true) - $send_message_start) . " sec; Response: " . print_r($response, true) . ";\n");
+
+		return true;
 	}
 
 	/**
