@@ -4,12 +4,18 @@
 namespace Core;
 
 
+use Core\Bots\IBot;
 use Core\Entities\Command;
-use Core\Entities\CommandAnswer;
 use Exception;
 
 abstract class ACommandHandler
 {
+	/**
+	 * Бот
+	 * @var IBot
+	 */
+	protected $bot;
+
 	/**
 	 * Переданная пользователем команда
 	 * @var Command
@@ -23,7 +29,7 @@ abstract class ACommandHandler
 	protected $user;
 
 	/**
-	 * Пользователь
+	 * Обработчик вывода
 	 * @var AViewer
 	 */
 	protected $viewer;
@@ -62,6 +68,7 @@ abstract class ACommandHandler
 		'send_question_text' => 'Пришлите свой вопрос, он будет передан разработчику',
 		'you_have_already_registered' => 'Вы уже зарегистрированы в системе',
 		'bot_is_offline' => 'Извините, бот отключён. Попробуйте позже',
+		'nothing_to_cancel' => 'Нечего отменять',
 
 		// Ошибки
 		'undefined_command' => 'Неизвестная команда, попробуйте изменить запрос :)',
@@ -74,12 +81,14 @@ abstract class ACommandHandler
 	/**
 	 * ACommandHandler constructor.
 	 *
-	 * @param Command $command - Переданная пользователем команда
+	 * @param IBot $bot - Бот
+	 * @param Command $command - команда пользователя
 	 * @param AUser $user - Пользователь
 	 * @param AViewer $viewer - Обработчик вывода
 	 */
-	public function __construct(Command $command, AUser $user, AViewer $viewer)
+	public function __construct(IBot $bot, Command $command, AUser $user, AViewer $viewer)
 	{
+		$this->bot     = $bot;
 		$this->command = $command;
 		$this->user    = $user;
 		$this->viewer  = $viewer;
@@ -88,29 +97,33 @@ abstract class ACommandHandler
 	/**
 	 * Передаёт обработку команды соответсвующему обработчику
 	 *
-	 * @return CommandAnswer|null
+	 * @return bool
 	 * @throws Exception
 	 */
-	public function handle(): ?CommandAnswer
+	public function handle(): bool
 	{
 		// Нет никаких проверок на существование метода в классе, т.к. его отсутствие в любом случае вызовет исключение
 
+		$start_time_handle = microtime(true);
+
 		// Если от пользователя НЕ ожидается какой-либо ввод
 		if (is_null($this->user->expected_input))
-			$return = $this->{$this->command->handlerName}();
+			$this->{$this->command->handlerName}();
 		// Если от пользователя ожидается какой-либо ввод
 		else {
 			if (array_key_exists($this->user->expected_input, $this->expectedInputTypes))
 				// Если пользователь ввёл разрешённую команду при ожидаемом вводе, передаём обработку её обработчику, иначе обработчику ожидаемого ввода
 				if (array_search($this->command->handlerName, $this->expectedInputTypes[$this->user->expected_input]['allowed_methods'] ?? array()) !== false)
-					$return = $this->{$this->command->handlerName}();
+					$this->{$this->command->handlerName}();
 				else
-					$return = $this->{$this->expectedInputTypes[$this->user->expected_input]['method_name']}();
+					$this->{$this->expectedInputTypes[$this->user->expected_input]['method_name']}();
 			else
-				$return = new CommandAnswer(static::$answers['undefined_expected_input']);
+				$this->bot->sendMessage($this->user->destinationID, static::$answers['undefined_expected_input'], 'full');
 		}
 
-		return $return;
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog("Command handle finished in " . microtime(true) - $start_time_handle . " sec;\n");
+
+		return true;
 	}
 
 	/**
@@ -147,153 +160,177 @@ abstract class ACommandHandler
 	/**
 	 * Обработчик команды "Начать"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 */
-	protected function start(): CommandAnswer
+	protected function start(): void
 	{
-		return new CommandAnswer(static::$answers['you_have_already_registered']);
+		$this->bot->sendMessage($this->user->destinationID, static::$answers['you_have_already_registered'], 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "Отмена"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 */
-	protected function cancelInput(): CommandAnswer
+	protected function cancelInput(): void
 	{
-		if (is_null($this->user->expected_input))
-			return new CommandAnswer('Нечего отменять');
+		if (is_null($this->user->expected_input)){
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['nothing_to_cancel'], 'full');
+			return;
+		}
 
 		$this->user->update('expected_input', null);
-		return new CommandAnswer(static::$answers['canceled']);
+		$this->bot->sendMessage($this->user->destinationID, static::$answers['canceled'], 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "Список команд"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 */
-	protected function sendHelp(): CommandAnswer
+	protected function sendHelp(): void
 	{
-		return new CommandAnswer(static::$answers['available_commands']);
+		$this->bot->sendMessage($this->user->destinationID, static::$answers['available_commands'], 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "На сегодня"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 * @throws Exception
 	 */
-	protected function sendScheduleForToday(): CommandAnswer
+	protected function sendScheduleForToday(): void
 	{
 		$schedule = $this->getGroupSchedule();
-		if (isset($schedule['error']))
-			return new CommandAnswer(static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error']);
+		if (isset($schedule['error'])){
+			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
+			return;
+		}
 
 		$answer = $this->viewer->viewToday($schedule, Schedule::getEventsForDay(date('Y-m-d'), $schedule['data']['group']['city']));
-		return new CommandAnswer($answer);
+		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "На завтра"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 * @throws Exception
 	 */
-	protected function sendScheduleForTomorrow(): CommandAnswer
+	protected function sendScheduleForTomorrow(): void
 	{
 		$schedule = $this->getGroupSchedule();
-		if (isset($schedule['error']))
-			return new CommandAnswer(static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error']);
+		if (isset($schedule['error'])){
+			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
+			return;
+		}
 
 		$answer = $this->viewer->viewTomorrow($schedule, Schedule::getEventsForDay(date('Y-m-d', time()+86400), $schedule['data']['group']['city']));
-		return new CommandAnswer($answer);
+		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "На эту неделю"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 * @throws Exception
 	 */
-	protected function sendScheduleForThisWeek(): CommandAnswer
+	protected function sendScheduleForThisWeek(): void
 	{
 		$schedule = $this->getGroupSchedule();
-		if (isset($schedule['error']))
-			return new CommandAnswer(static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error']);
+		if (isset($schedule['error'])){
+			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
+			return;
+		}
 
 		$answer = $this->viewer->viewThisWeek($schedule, Schedule::getEventsForWeek(false, $schedule['data']['group']['city']));
-		return new CommandAnswer($answer);
+		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "На следующую неделю"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 * @throws Exception
 	 */
-	protected function sendScheduleForNextWeek(): CommandAnswer
+	protected function sendScheduleForNextWeek(): void
 	{
 		$schedule = $this->getGroupSchedule();
-		if (isset($schedule['error']))
-			return new CommandAnswer(static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error']);
+		if (isset($schedule['error'])){
+			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
+			return;
+		}
 
 		$answer = $this->viewer->viewNextWeek($schedule, Schedule::getEventsForWeek(true, $schedule['data']['group']['city']));
-		return new CommandAnswer($answer);
+		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "Изменить группу"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 * @throws Exception
 	 */
-	protected function changeUserGroup(): CommandAnswer
+	protected function changeUserGroup(): void
 	{
-		if (!is_null($this->command->arguments))
-			return $this->inputUserGroup($this->command->arguments[0]);
+		if (!is_null($this->command->arguments)){
+			$this->inputUserGroup($this->command->arguments[0]);
+			return;
+		}
 
 		$this->user->update('expected_input', 'group_name');
-		return new CommandAnswer(static::$answers['send_group_name'], 'cancel');
+		$this->bot->sendMessage($this->user->destinationID, static::$answers['send_group_name'], 'cancel');
+		return;
 	}
 
 	/**
 	 * Обработчик команды "Задать вопрос"
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 */
-	protected function askNewQuestion(): CommandAnswer
+	protected function askNewQuestion(): void
 	{
 		$this->user->update('expected_input', 'question_text');
-		return new CommandAnswer(static::$answers['send_question_text'], 'cancel');
+		$this->bot->sendMessage($this->user->destinationID, static::$answers['send_question_text'], 'cancel');
+		return;
 	}
 
 	/**
 	 * Обработчик ввода группы пользователя
 	 *
 	 * @param string|null $groupName - группа пользователя
-	 * @return CommandAnswer
+	 * @return void
 	 * @throws Exception
 	 */
-	protected function inputUserGroup(string $groupName = null): CommandAnswer
+	protected function inputUserGroup(string $groupName = null): void
 	{
 		if (is_null($groupName))
 			$group = Schedule::searchGroup($this->command->original);
 		else
 			$group = Schedule::searchGroup($groupName);
 
-		if (!$group)
-			return new CommandAnswer(static::$answers['cannot_find_group'], 'cancel');
+		if (!$group){
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['cannot_find_group'], 'cancel');
+			return;
+		}
 
 		$this->user->update('group_symbolic', $group['symbolic']);
 		$this->user->update('expected_input', null);
-		return new CommandAnswer('Ваша группа была успешно изменена на ' . $group['caption']);
+		$this->bot->sendMessage($this->user->destinationID, 'Ваша группа была успешно изменена на ' . $group['caption'], 'full');
+		return;
 	}
 
 	/**
 	 * Обработчик ввода текста вопроса
 	 *
-	 * @return CommandAnswer
+	 * @return void
 	 */
-	protected abstract function inputQuestionText(): CommandAnswer;
+	protected abstract function inputQuestionText(): void;
 }
