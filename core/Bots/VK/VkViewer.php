@@ -169,7 +169,7 @@ class VkViewer extends AViewer
 		} else $message .= "Ничего не запланировано\n\n";
 		$message .= " ---- ---- \n\n";
 
-		$message .= 'Для вывода списка команд, пришлите "Список команд" или "/help"';
+		$message .= 'Для вывода списка команд пришлите "Список команд" или "/help"';
 
 		return $message;
 	}
@@ -230,10 +230,10 @@ class VkViewer extends AViewer
 				$message .= "\n";
 			}
 			$message .= "\n";
-		} else $message .= "Ничего не запланировано\n";
-		$message .= " ---- ---- \n";
+		} else $message .= "Ничего не запланировано\n\n";
+		$message .= " ---- ---- \n\n";
 
-		$message .= 'Для вывода списка команд, пришлите "Список команд" или "/help"';
+		$message .= 'Для вывода списка команд пришлите "Список команд" или "/help"';
 
 		return $message;
 	}
