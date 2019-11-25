@@ -1,6 +1,7 @@
 <?php
 
 use Core\Bots\VK\VkBot;
+use Core\Logger;
 
 require_once 'handler-main.php';
 
@@ -16,3 +17,9 @@ if (is_null($event))
 // Запускаем бота
 $VkBot  = new VKBot();
 $VkBot->handle($event);
+
+// Завершаем логирование
+if (isset($BOT_LOG)) {
+	$BOT_LOG->addToLog('Script time: ' . round(microtime(true) - $START_TIME, 4) . " sec;");
+	Logger::log($BOT_LOG->fileName, $BOT_LOG->textLog);
+}
