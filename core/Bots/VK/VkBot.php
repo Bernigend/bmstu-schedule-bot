@@ -33,13 +33,13 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 	 * Доступ к VK API
 	 * @var VKApiClient
 	 */
-	protected $vkApiClient;
+	public $vkApiClient;
 
 	/**
 	 * Конфигурация бота
 	 * @var array
 	 */
-	protected $config = null;
+	public $config = null;
 
 	/**
 	 * VKBot constructor.
@@ -112,7 +112,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 
 		echo 'ok';
 
-		if (isset($BOT_LOG)) $BOT_LOG->addToLog("VK: message_id={$eventData['id']}, peer_id={$eventData['peer_id']}, text='{$eventData['text']}';\n");
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog("VK: group_id={$groupId}({$this->config['name']}); message_id={$eventData['id']}, peer_id={$eventData['peer_id']}, text='{$eventData['text']}';\n");
 
 		// Проверяем, был ли уже обработан запрос
 		$date = DataBase::getOne('SELECT `date` FROM `' . Config::DB_PREFIX . 'handled_messages_vk` WHERE `message_id` = ? AND `peer_id` = ?', array ($eventData['id'], $eventData['peer_id']));
