@@ -202,10 +202,13 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		global $BOT_LOG;
 		$send_message_start = microtime(true);
 
+		if ($peerID == $this->config['developers_talk_peer_id'])
+			$keyboardType = null;
+
 		$response = $this->vkApiClient->messages()->send($this->config['access_token'], array (
 			'peer_id'  => $peerID,
 			'message'  => $message,
-			'keyboard' => ($peerID == $this->config['developers_talk_peer_id']) ? null : $this->getKeyboard($keyboardType),
+			'keyboard' => $this->getKeyboard($keyboardType),
 			'dont_parse_links' => 1,
 			'random_id' => random_int(1, 999999999999)
 		));
@@ -335,6 +338,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 					),
 				);
 				break;
+			case 'hidden':
 			default:
 				$keyboard = array (
 					'one_time' => true,
@@ -342,6 +346,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 				);
 				break;
 		}
+
 		$keyboard = json_encode($keyboard, JSON_UNESCAPED_UNICODE);
 		return $keyboard;
 	}
