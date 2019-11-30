@@ -11,7 +11,9 @@ namespace Core\Bots\Telegram;
 
 use Clue\React\Socks\Client;
 use Core\ACommandHandler;
+use Core\Bots\IBot;
 use Core\Config;
+use Core\DataBase;
 use Core\Entities\Command;
 use Core\Entities\TelegramUser;
 use Exception;
@@ -24,7 +26,7 @@ use unreal4u\TelegramAPI\Telegram\Types\ReplyKeyboardMarkup;
 use unreal4u\TelegramAPI\Telegram\Types\Update;
 use unreal4u\TelegramAPI\TgLog;
 
-class TelegramBot
+class TelegramBot implements IBot
 {
 	/**
 	 * @var LoopInterface
@@ -68,9 +70,28 @@ class TelegramBot
 	 */
 	public function handle(Update $event): bool
 	{
-		// Если бот отключён и пользователь не имеет администратрских прав
+		global $BOT_LOG;
+
+		// Проверка сервера отправления
+		if (!$this->checkSenderServer())
+			die ('Access denied');
+
+		if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Telegram: chat_id={$event->message->chat->id}; message_id={$event->message->message_id}, user_id={$event->message->from->id}, username={$event->message->from->username}, text='{$event->message->text}';\n");
+
+		// Проверяем, был ли уже обработан запрос
+		$date = DataBase::getOne('SELECT `date` FROM `' . Config::DB_PREFIX . 'handled_messages_telegram` WHERE `message_id` = ? AND `chat_id` = ?', array($event->message->message_id, $event->message->chat->id));
+		if ($date) {
+			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Message has already been processed at '{$date}';\n");
+			return false;
+		}
+
+		// Добавляем запрос в обработанные
+		DataBase::query('INSERT INTO `' . Config::DB_PREFIX . 'handled_messages_telegram` SET `message_id` = ?, `chat_id` = ?', array($event->message->message_id, $event->message->chat->id));
+
+		// Если бот отключён и пользователь не имеет администраторских прав
 		if (!Config::BOT_ONLINE && !array_search('chatID-' . $event->message->chat->id, Config::ADMIN_USERS)) {
-			$this->sendMessage($event->message->chat->id, ACommandHandler::$answers['bot_is_offline'], $this->getKeyboard('full'));
+			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Bot is offline and user has not admin privileges;\n");
+			$this->sendMessage($event->message->chat->id, ACommandHandler::$answers['bot_is_offline'], 'full');
 			return true;
 		}
 
@@ -78,12 +99,12 @@ class TelegramBot
 		$userId = TelegramUser::find($event->message->chat->id);
 		if (!$userId) {
 			TelegramUser::register($event->message->chat->id, 'group_name');
-			$this->sendMessage($event->message->chat->id, ACommandHandler::$answers['greetings_with_send_group_name'], $this->getKeyboard('cancel'));
+			$this->sendMessage($event->message->chat->id, ACommandHandler::$answers['greetings_with_send_group_name'], 'cancel');
 			return true;
 		}
 
 		// Инициализируем пользователя
-		$user = new TelegramUser($userId);
+		$user = new TelegramUser($userId, $event->message->chat->id);
 		$user->loadData();
 
 		// Инициализируем команду пользователя
@@ -92,12 +113,8 @@ class TelegramBot
 			return false;
 
 		// Передаём команду её обработчику
-		$commandHandler = new TelegramCommandHandler($command, $user, new TelegramViewer());
-		$commandAnswer  = $commandHandler->handle();
-
-		// Отправляем ответ
-		if (!is_null($commandAnswer))
-			$this->sendMessage($event->message->chat->id, $commandAnswer->text, $this->getKeyboard($commandAnswer->keyboardType));
+		$commandHandler = new TelegramCommandHandler($this, $command, $user, new TelegramViewer());
+		$commandHandler->handle();
 
 		return true;
 	}
@@ -107,14 +124,19 @@ class TelegramBot
 	 *
 	 * @param int $chatID
 	 * @param string $message
-	 * @param array $keyboard
+	 * @param string $keyboardType
+	 * @return bool
 	 */
-	protected static function sendMessage(int $chatID, string $message, array $keyboard = array ()): void
+	public function sendMessage($chatID, $message, $keyboardType = null): bool
 	{
+		global $BOT_LOG;
+		$send_message_start = microtime(true);
+
 		$sendMessage = new SendMessage();
 		$sendMessage->chat_id = $chatID;
-//		$message = str_replace('<br>', "\n", $message);
 		$sendMessage->text = $message;
+
+		$keyboard = $this->getKeyboard($keyboardType);
 
 		$sendMessage->reply_markup = new ReplyKeyboardMarkup();
 		$sendMessage->reply_markup->one_time_keyboard = $keyboard['one_time_keyboard'] ?? true;
@@ -126,6 +148,23 @@ class TelegramBot
 
 		static::$telegramApiTgLog->performApiRequest($sendMessage);
 		static::$telegramApiLoop->run();
+
+		if (Config::BOT_LOG_ON) $BOT_LOG->addToLog(" - Send message finished in " . round(microtime(true) - $send_message_start, 4) . " sec;\n");
+
+		return true;
+	}
+
+	/**
+	 * Проверяет наличие токена доступа в строке запроса
+	 *
+	 * @return bool
+	 */
+	protected function checkSenderServer(): bool
+	{
+		if (!in_array(Config::TELEGRAM_API_ACCESS_TOKEN, explode('/', $_SERVER['REQUEST_URI'])))
+			return false;
+
+		return true;
 	}
 
 	/**
