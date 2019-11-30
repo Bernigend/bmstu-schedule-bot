@@ -19,23 +19,22 @@ class VkViewer extends AViewer
 	public function viewToday(array $schedule, ?array $events = null): string
 	{
 		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+
+		$message  = '📅 Дата: ' . date('d.m', time());
 		if ($week == 'at_numerator')
-			$message = 'Вы учитесь по числителю';
+			$message .= ' (числитель)';
 		else
-			$message = 'Вы учитесь по знаменателю';
+			$message .= ' (знаменатель)';
+		$message .= "\n";
+
+		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
 		$message .= "\n";
 
 		if (date('n') > 8)
 			$message .= 'Семестр: 1';
 		else
 			$message .= 'Семестр: 2';
-		$message .= "\n";
-
-		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
-		$message .= "\n";
-
-		$message .= 'Дата: ' . date('d.m', time()) . "\n\n";
-		$message .= " ---- ---- \n\n";
+		$message .= "\n\n ---- ---- \n\n";
 
 		$message .= $this->viewDay($schedule['data']['schedule_days'], date('N'), $week) . "\n";
 		$message .= " ---- ---- \n\n";
@@ -69,23 +68,22 @@ class VkViewer extends AViewer
 	public function viewTomorrow(array $schedule, ?array $events = null): string
 	{
 		$week = Schedule::getWeekName($schedule['data']['usual_time'], true);
+
+		$message  = '📅 Дата: ' . date('d.m', time()+86400);
 		if ($week == 'at_numerator')
-			$message = 'Завтра вы учитесь по числителю';
+			$message .= ' (числитель)';
 		else
-			$message = 'Завтра вы учитесь по знаменателю';
+			$message .= ' (знаменатель)';
+		$message .= "\n";
+
+		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
 		$message .= "\n";
 
 		if (date('n') > 8)
 			$message .= 'Семестр: 1';
 		else
 			$message .= 'Семестр: 2';
-		$message .= "\n";
-
-		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
-		$message .= "\n";
-
-		$message .= 'Дата: ' . date('d.m', time()+86400) . "\n\n";
-		$message .= " ---- ---- \n\n";
+		$message .= "\n\n ---- ---- \n\n";
 
 		$message .= $this->viewDay($schedule['data']['schedule_days'], date('N', time()+86400), $week) . "\n";
 		$message .= " ---- ---- \n\n";
@@ -120,23 +118,22 @@ class VkViewer extends AViewer
 	public function viewThisWeek(array $schedule, ?array $events = null): string
 	{
 		$week = Schedule::getWeekName($schedule['data']['usual_time']);
+
+		$message  = '📅 Дата: ' . date('d.m', time()-86400*(date('N')-1)) . ' - ' . date('d.m', time()+86400*(7-date('N')));
 		if ($week == 'at_numerator')
-			$message = 'Вы учитесь по числителю';
+			$message .= ' (числитель)';
 		else
-			$message = 'Вы учитесь по знаменателю';
+			$message .= ' (знаменатель)';
+		$message .= "\n";
+
+		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
 		$message .= "\n";
 
 		if (date('n') > 8)
 			$message .= 'Семестр: 1';
 		else
 			$message .= 'Семестр: 2';
-		$message .= "\n";
-
-		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
-		$message .= "\n";
-
-		$message .= 'Дата: ' . date('d.m', time()-86400*(date('N')-1)) . ' - ' . date('d.m', time()+86400*(7-date('N'))) . "\n\n";
-		$message .= " ---- ---- \n\n";
+		$message .= "\n\n ---- ---- \n\n";
 
 		for ($weekDay = 1; $weekDay <= 7; $weekDay++) {
 			$message .= $this->viewDay($schedule['data']['schedule_days'], $weekDay, $week);
@@ -184,23 +181,22 @@ class VkViewer extends AViewer
 	public function viewNextWeek(array $schedule, ?array $events = null): string
 	{
 		$week = Schedule::getWeekName($schedule['data']['usual_time'], false, true);
+
+		$message  = '📅 Дата: ' . date('d.m', time()+(7-date('N')+1)*86400) . ' - ' . date('d.m', time()+86400*(7+(7-date('N'))));
 		if ($week == 'at_numerator')
-			$message = 'Вы будете учиться по числителю';
+			$message .= ' (числитель)';
 		else
-			$message = 'Вы будете учиться по знаменателю';
+			$message .= ' (знаменатель)';
+		$message .= "\n";
+
+		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
 		$message .= "\n";
 
 		if (date('n') > 8)
 			$message .= 'Семестр: 1';
 		else
 			$message .= 'Семестр: 2';
-		$message .= "\n";
-
-		$message .= 'Группа: ' . $schedule['data']['group']['name'] . ' (' . $schedule['data']['group']['city']  . ')';
-		$message .= "\n";
-
-		$message .= 'Дата: ' . date('d.m', time()+(7-date('N')+1)*86400) . ' - ' . date('d.m', time()+86400*(7+(7-date('N')))) . "\n\n";
-		$message .= " ---- ---- \n\n";
+		$message .= "\n\n ---- ---- \n\n";
 
 		for ($weekDay = 1; $weekDay <= 7; $weekDay++) {
 			$message .= $this->viewDay($schedule['data']['schedule_days'], $weekDay, $week);
