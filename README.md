@@ -1,0 +1,1 @@
+# mf-bmstu-schedule-bot

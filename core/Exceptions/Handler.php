@@ -1,13 +1,14 @@
 <?php
 
 
-namespace Core;
+namespace Core\Exceptions;
 
 
+use Core\Config;
 use Exception;
 use Throwable;
 
-class ExceptionHandler
+class Handler
 {
 	/**
 	 * Обработчик исключений
@@ -16,8 +17,7 @@ class ExceptionHandler
 	 *
 	 * @param Throwable $exception
 	 */
-	public static function handle(Throwable $exception): void
-	{
+	public static function handle (Throwable $exception) {
 		$messageToLog  = 'Uncaught exception: \'' . get_class($exception) . '\' ';
 		$messageToLog .= "with message '{$exception->getMessage()}'; ";
 		$messageToLog .= "Stack trace: {$exception->getTraceAsString()}; ";
@@ -25,14 +25,16 @@ class ExceptionHandler
 
 		// Логируем исключение
 		if (Config::LOG_ERRORS_TO_FILE)
-			error_log("[" . date('d.m.Y H:i:s') . "] " . $messageToLog . "\n\n", 3, Config::ERRORS_LOG_FILE_DIRECTORY . date("d.m.Y") . '.txt');
+			error_log($messageToLog, 3, Config::ERRORS_LOG_FILE_DIRECTORY . date("d.m.Y") . '.txt');
 		else
-			error_log("[" . date('d.m.Y H:i:s') . "] " . $messageToLog . "\n\n");
+			error_log($messageToLog);
 
 		// Выводим его на экран, если включён режим отладки
 		if (Config::DEBUG_ON) {
 			echo $messageToLog;
+			ob_end_flush();
 		}
+
 		exit;
 	}
 
@@ -45,7 +47,7 @@ class ExceptionHandler
 	 * @param $line
 	 * @throws Exception
 	 */
-	public static function handleError($level, $message, $file, $line): void
+	public static function handleError ($level, $message, $file, $line)
 	{
 		throw new Exception($message);
 	}

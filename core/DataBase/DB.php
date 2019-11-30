@@ -1,14 +1,15 @@
 <?php
 
 
-namespace Core;
+namespace Core\DataBase;
 
 
+use Core\Config;
 use Exception;
 use PDO;
 use PDOStatement;
 
-class DataBase
+class DB
 {
 	/**
 	 * @var PDO
@@ -18,7 +19,7 @@ class DataBase
 	/**
 	 * Выполняет подключение к базе данных
 	 */
-	public static function connect(): void
+	public static function connect ()
 	{
 		if (is_null(static::$connection)) {
 			static::$connection = new PDO('mysql:host=' . Config::DB_HOST . ';dbname=' . Config::DB_NAME . ';charset=' . Config::DB_CHARSET, Config::DB_USER, Config::DB_PASS, array(
@@ -37,7 +38,7 @@ class DataBase
 	 * @return bool|false|PDOStatement|string
 	 * @throws Exception
 	 */
-	public static function query(string $sql, array $params = null)
+	public static function query (string $sql, array $params = null)
 	{
 		static::connect();
 
@@ -62,7 +63,7 @@ class DataBase
 	 * @return bool|mixed
 	 * @throws Exception
 	 */
-	public static function getOne(string $sql, array $params = null)
+	public static function getOne (string $sql, array $params = null)
 	{
 		static::connect();
 
@@ -81,12 +82,30 @@ class DataBase
 	 * @return bool|mixed
 	 * @throws Exception
 	 */
-	public static function getRow(string $sql, array $params = null)
+	public static function getRow (string $sql, array $params = null)
 	{
 		static::connect();
 
 		$row = static::query($sql, $params)->fetch();
 		if (is_array($row))
+			return $row;
+		else
+			return false;
+	}
+
+	/**
+	 * Возвращает значение определенного столбца таблицы базы данных
+	 * @param string $sql - требуемый SQL запрос
+	 * @param array|null $params - массив значений, которые следует подставить вместо "?" в подготовленном запросе
+	 * @return bool|mixed
+	 * @throws Exception
+	 */
+	public static function getCol (string $sql, array $params = null)
+	{
+		static::connect();
+
+		$row = static::query($sql, $params)->fetchColumn();
+		if ($row)
 			return $row;
 		else
 			return false;
@@ -111,22 +130,49 @@ class DataBase
 	}
 
 	/**
-	 * Возвращает ID последнего запроса INSERT
-	 * @return integer
+	 * Возвращает значения столбца в виде одномерного массива
+	 *
+	 * @param string $sql
+	 * @param array|null $params
+	 * @return array|bool
+	 * @throws Exception
 	 */
-	public static function insertId()
+	public static function getColsInArray (string $sql, array $params = null)
 	{
 		static::connect();
+
+		$return = array();
+		$rows = static::query($sql, $params);
+		if (!$rows)
+			return false;
+
+		while ($colVal = $rows->fetchColumn()) {
+			array_push($return, $colVal);
+		}
+		return $return;
+	}
+
+	/**
+	 * Возвращает ID последнего запроса INSERT
+	 *
+	 * @return integer
+	 */
+	public static function insertId ()
+	{
+		static::connect();
+
 		return (int)static::$connection->lastInsertId();
 	}
 
 	/**
 	 * Возвращает информацию о последней ошибке
+	 *
 	 * @return mixed
 	 */
-	public static function getLastError()
+	public static function getLastError ()
 	{
 		static::connect();
+
 		return static::$connection->errorInfo()[2];
 	}
 }

@@ -1,5 +1,4 @@
 .idea/
-.git/
-vendor/
-logs/
-core/Config.php
+/core/Config.php
+/logs/
+/vendor/
