@@ -72,7 +72,7 @@ class VkCommandHandler extends ACommandHandler
 		$message .= "Вопрос:\n'{$this->command->original}'";
 
 		// Отправляем уведомление в беседу разработчиков
-		$this->bot->sendMessage($this->bot->config['developers_talk_peer_id'], $message);
+		$this->bot->sendMessage($this->bot->config['developers_talk_peer_id'], $message, 'hidden');
 		$this->user->update('expected_input', null);
 		$this->bot->sendMessage($this->user->destinationID, static::$answers['question_successfully_sent'], 'full');
 		return;
