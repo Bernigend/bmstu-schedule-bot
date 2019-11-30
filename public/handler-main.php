@@ -1,13 +1,19 @@
 <?php
 
+$START_TIME = microtime(true);
+
 use Core\Config;
+use Core\Logger;
 
 // Подключаем автозагрузчик
 require_once '../vendor/autoload.php';
 
-// Если бот выключен, прекращаем работу
-if (!Config::BOT_ONLINE)
-	die('ok');
+// Запуск логера
+$BOT_LOG = new Logger('requests_' . date('d.m.Y') . '.log');
+
+// Если бот выключен на системном уровне - прекращаем работу
+if (!Config::BOT_SYSTEM_ONLINE)
+	die ('System offline');
 
 // Настройка вывода ошибок
 error_reporting(Config::ERROR_REPORTING_LEVEL);

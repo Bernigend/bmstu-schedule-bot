@@ -1,10 +1,9 @@
 <?php
 
 
-namespace Core\Schedule;
+namespace Core;
 
 
-use Core\Config;
 use Core\DataBase as DB;
 use Exception;
 
@@ -21,8 +20,11 @@ class Schedule
 	 * @return array|bool
 	 * @throws Exception
 	 */
-	public static function searchGroup (string $groupName)
+	public static function searchGroup(string $groupName)
 	{
+		global $BOT_LOG;
+		$start_time = microtime(true);
+
 		// Делаем запрос к API
 		$URI = 'https://b.bmstu.ru/api/search/' . urlencode($groupName);
 		$searchJSON = static::loadData($URI);
@@ -32,7 +34,6 @@ class Schedule
 			throw new Exception ('Cant`d decode JSON of search group data: ' . print_r($searchJSON, true));
 
 		$searchData = $searchData->data;
-
 		if (!isset ($searchData->count) || $searchData->count < 1)
 			return false;
 
@@ -44,6 +45,8 @@ class Schedule
 				);
 		}
 
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog(" - Search group finished in " . round(microtime(true) - $start_time, 4) . " sec;\n");
+
 		return false;
 	}
 
@@ -54,13 +57,17 @@ class Schedule
 	 * @return mixed
 	 * @throws Exception
 	 */
-	public static function loadSchedule (string $groupSymbolic)
+	public static function loadSchedule(string $groupSymbolic)
 	{
+		global $BOT_LOG;
+		$start_time = microtime(true);
+
 		$scheduleJSON = static::loadData('https://b.bmstu.ru/api/schedule/' . urlencode($groupSymbolic));
 		$scheduleData = json_decode($scheduleJSON, true);
-
 		if (!$scheduleData)
 			throw new Exception ('Cant`d decode JSON of search group data: ' . print_r($scheduleJSON, true));
+
+		if (isset($BOT_LOG)) $BOT_LOG->addToLog(" - Load schedule finished in " . round(microtime(true) - $start_time, 4) . " sec;\n");
 
 		return $scheduleData;
 	}
@@ -73,11 +80,11 @@ class Schedule
 	 * @param bool $nextWeek
 	 * @return string
 	 */
-	public static function getWeekName (bool $usualTime, bool $tomorrow = false, bool $nextWeek = false) : string
+	public static function getWeekName(bool $usualTime, bool $tomorrow = false, bool $nextWeek = false): string
 	{
 		$year = (date('n') > 8) ? date('Y') : date('Y')-1;
-
 		$week = strtotime("first monday of September {$year}");
+
 		if ($tomorrow)
 			$week = date('W', time()+86400) - date('W', $week) + 1;
 		elseif ($nextWeek)
@@ -87,7 +94,6 @@ class Schedule
 
 		// определяем чётность недели
 		$week = $week % 2;
-
 		if (!$usualTime)
 			$week = (int)!$week; // меняем значение на обратное
 
@@ -101,6 +107,50 @@ class Schedule
 			$week = 'at_denominator';
 
 		return $week;
+	}
+
+	/**
+	 * Возвращает данные о событии на определённый день
+	 *
+	 * @param string $date - дата проведения формата YYYY-MM-DD
+	 * @param string $city - город проведения
+	 * @return array|null
+	 * @throws Exception
+	 */
+	public static function getEventsForDay(string $date, string $city): ?array
+	{
+		$events = DB::getAll('SELECT * FROM `' . Config::DB_PREFIX . 'events` WHERE `city` = ? AND `date` = ? ORDER BY `time`', array($city, $date));
+		if (!$events)
+			return null;
+
+		return $events;
+	}
+
+	/**
+	 * Возвращает данные о событиях на текущую/следующую неделю
+	 *
+	 * @param bool $nextWeek
+	 * @param string $city - город проведения
+	 * @return array|null
+	 * @throws Exception
+	 */
+	public static function getEventsForWeek(bool $nextWeek, string $city): ?array
+	{
+		if (!$nextWeek)
+			$dateStart = date('Y.m.d', time()-86400*(date('N')-1));
+		else
+			$dateStart = date('Y.m.d', time()+(7-date('N')+1)*86400);
+
+		if (!$nextWeek)
+			$dateEnd = date('Y.m.d', time()+86400*(7-date('N')));
+		else
+			$dateEnd = date('Y.m.d', time()+86400*(7+(7-date('N'))));
+
+		$events = DB::getAll('SELECT * FROM `' . Config::DB_PREFIX . 'events` WHERE `city` = ? AND `date` >= ? AND `date` <= ? ORDER BY `date`, `time`', array ($city, $dateStart, $dateEnd));
+		if (!$events)
+			return null;
+
+		return $events;
 	}
 
 	/**
@@ -119,7 +169,6 @@ class Schedule
 
 		$curl_error_code = curl_errno($curl);
 		$curl_error      = curl_error($curl);
-
 		curl_close($curl);
 
 		if ($curl_error || $curl_error_code) {
@@ -130,6 +179,10 @@ class Schedule
 			throw new Exception($error_msg);
 		}
 
+//		Logger::log('schedule_load_data_' . date('d.m.Y') . '.log', 'URI: ' . $URI . '; Response: ' . substr(var_export($response, true), 0, 128) . '...');
+
 		return $response;
 	}
+
+
 }

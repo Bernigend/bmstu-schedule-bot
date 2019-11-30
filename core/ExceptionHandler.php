@@ -16,7 +16,8 @@ class ExceptionHandler
 	 *
 	 * @param Throwable $exception
 	 */
-	public static function handle (Throwable $exception) {
+	public static function handle(Throwable $exception): void
+	{
 		$messageToLog  = 'Uncaught exception: \'' . get_class($exception) . '\' ';
 		$messageToLog .= "with message '{$exception->getMessage()}'; ";
 		$messageToLog .= "Stack trace: {$exception->getTraceAsString()}; ";
@@ -24,16 +25,14 @@ class ExceptionHandler
 
 		// Логируем исключение
 		if (Config::LOG_ERRORS_TO_FILE)
-			error_log($messageToLog, 3, Config::ERRORS_LOG_FILE_DIRECTORY . date("d.m.Y") . '.txt');
+			error_log("[" . date('d.m.Y H:i:s') . "] " . $messageToLog . "\n\n", 3, Config::ERRORS_LOG_FILE_DIRECTORY . date("d.m.Y") . '.txt');
 		else
-			error_log($messageToLog);
+			error_log("[" . date('d.m.Y H:i:s') . "] " . $messageToLog . "\n\n");
 
 		// Выводим его на экран, если включён режим отладки
 		if (Config::DEBUG_ON) {
 			echo $messageToLog;
-			ob_end_flush();
 		}
-
 		exit;
 	}
 
@@ -46,8 +45,8 @@ class ExceptionHandler
 	 * @param $line
 	 * @throws Exception
 	 */
-	public static function handleError ($level, $message, $file, $line)
+	public static function handleError($level, $message, $file, $line): void
 	{
-		throw new Exception ($message);
+		throw new Exception($message);
 	}
 }

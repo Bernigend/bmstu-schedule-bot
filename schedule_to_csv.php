@@ -1,15 +1,19 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: Bernigend
+ * Date: 13.11.2019
+ * Time: 14:23
+ */
+
 
 class ScheduleLoader
 {
 	protected static $pathToCSVFile = '/var/www/and940/data/www/bernigend.ru/bmstu-schedule-bot/tmp/schedule.csv';
-
-	protected static $from_h = array (1 => 8, 2 => 10, 3 => 12, 4 => 14, 5 => 16, 6 => 18, 7 => 19);
-	protected static $from_m = array (1 => 40, 2 => 25, 3 => 50, 4 => 35, 5 => 20, 6 => 0, 7 => 45);
-
-
-	protected static $to_h = array (1 => 10, 2 => 12, 3 => 14, 4 => 16, 5 => 17, 6 => 19, 7 => 21);
-	protected static $to_m = array (1 => 15, 2 => 0, 3 => 25, 4 => 10, 5 => 55, 6 => 35, 7 => 20);
+	protected static $from_h = array(1 => 8, 2 => 10, 3 => 12, 4 => 14, 5 => 16, 6 => 18, 7 => 19);
+	protected static $from_m = array(1 => 40, 2 => 25, 3 => 50, 4 => 35, 5 => 20, 6 => 0, 7 => 45);
+	protected static $to_h = array(1 => 10, 2 => 12, 3 => 14, 4 => 16, 5 => 17, 6 => 19, 7 => 21);
+	protected static $to_m = array(1 => 15, 2 => 0, 3 => 25, 4 => 10, 5 => 55, 6 => 35, 7 => 20);
 
 	/**
 	 * Загружает информация о группах
@@ -17,14 +21,12 @@ class ScheduleLoader
 	 * @return array
 	 * @throws Exception
 	 */
-	public static function loadGroups ()
+	public static function loadGroups()
 	{
 		$groupsData = static::request('https://mf.bmstu.ru/rasp/backend/index.php?num=5');
 		$groupsData = json_decode($groupsData, true);
-
 		if (json_last_error() !== JSON_ERROR_NONE)
 			throw new Exception ('Can`t decode json string of groups: ' . json_last_error_msg() . '; Groups data: ' . print_r($groupsData, true));
-
 		// Разбираем полученное JSON представление списка групп
 		$groupsDataToSave = array();
 		foreach ($groupsData as $faculty) {
@@ -33,7 +35,6 @@ class ScheduleLoader
 			}
 		}
 		unset ($groupsData);
-
 		return $groupsDataToSave;
 	}
 
@@ -47,32 +48,24 @@ class ScheduleLoader
 	 * @return array|bool загруженное расписание группы в виде массива
 	 * @throws Exception
 	 */
-	public static function loadScheduleGroup (int $groupId, int $semester, int $startYear, bool $saveToDB = true)
+	public static function loadScheduleGroup(int $groupId, int $semester, int $startYear, bool $saveToDB = true)
 	{
 		// URI для получения JSON представления расписания
 		$jsonUri = "https://mf.bmstu.ru/rasp/backend/index.php?num=4&groupid={$groupId}&semestr={$semester}&start={$startYear}";
-
 		// Получаем JSON и декодируем его
 		$scheduleData = static::request($jsonUri);
 		if (!$scheduleData)
 			throw new Exception('Невозможно подключиться к ' . $jsonUri);
-
 		$scheduleData = json_decode($scheduleData, true);
-
 		// Если JSON не смог декодироваться
 		if (is_null($scheduleData))
 			return false;
-
 		unset($jsonUri);
-
 		// Возвращаемый массив данных расписания
 		$scheduleReturn = array(); //array (array ('subject', 'cabinet', 'person', 'day_n', 'is_numerator', 'group', 'from_h', 'from_m', 'to_h', 'to_m'));
-
 		if (!isset($scheduleData['day']))
 			return false;
-
 		foreach ($scheduleData['day'] as $dayKey => $day) {
-
 			if ($day['type'] == 1) {
 				$scheduleReturn[] = array(
 					'Занятия по особому расписанию',
@@ -100,12 +93,9 @@ class ScheduleLoader
 				);
 				continue;
 			}
-
 			if (!isset($day['pair']))
 				continue;
-
 			foreach ($day['pair'] as $pairKey => $pair) {
-
 				if (!empty($pair['lesson'][0]['obj']) || !empty($pair['lesson'][0]['aud']) || !empty($pair['lesson'][0]['lector'])) {
 					$scheduleReturn[] = array(
 						$pair['lesson'][0]['obj'],
@@ -120,7 +110,6 @@ class ScheduleLoader
 						static::$to_m[$pair['num']]
 					);
 				}
-
 				if ($pair['dbl']) {
 					if (!empty($pair['lesson'][1]['obj']) || !empty($pair['lesson'][1]['aud']) || !empty($pair['lesson'][1]['lector'])) {
 						$scheduleReturn[] = array(
@@ -154,7 +143,6 @@ class ScheduleLoader
 				}
 			}
 		}
-
 		return $scheduleReturn;
 	}
 
@@ -166,25 +154,21 @@ class ScheduleLoader
 	 * @param string|null $delimiter - разделитель полей
 	 * @return bool
 	 */
-	public static function saveToCSV (array $data, ?string $file = null, ?string $delimiter = ';')
+	public static function saveToCSV(array $data, ?string $file = null, ?string $delimiter = ';')
 	{
 		if (is_null($file))
 			$file = static::$pathToCSVFile;
-
 		if (file_exists($file))
 			rename($file, $file . '-old-' . time() . '.csv');
-
 		$file = fopen($file, 'w+');
 		if (!$file)
 			return false;
-
 		foreach ($data as $dataField) {
 			foreach ($dataField as &$item) {
 				$item = iconv("utf-8", "windows-1251", $item);
 			}
 			fputcsv($file, $dataField, $delimiter);
 		}
-
 		return true;
 	}
 
@@ -195,24 +179,20 @@ class ScheduleLoader
 	 * @return bool|string
 	 * @throws Exception
 	 */
-	protected static function request (string $URI)
+	protected static function request(string $URI)
 	{
 		$curl = curl_init($URI);
-		curl_setopt_array($curl, array (
-			CURLOPT_POST            => TRUE,    // это именно POST запрос
-			CURLOPT_RETURNTRANSFER  => TRUE,    // вернуть ответ ВК в переменную
-			CURLOPT_SSL_VERIFYPEER  => FALSE,   // не проверять https сертификаты
-			CURLOPT_SSL_VERIFYHOST  => FALSE,
-			CURLOPT_POSTFIELDS      => array()
+		curl_setopt_array($curl, array(
+			CURLOPT_POST => TRUE,    // это именно POST запрос
+			CURLOPT_RETURNTRANSFER => TRUE,    // вернуть ответ ВК в переменную
+			CURLOPT_SSL_VERIFYPEER => FALSE,   // не проверять https сертификаты
+			CURLOPT_SSL_VERIFYHOST => FALSE,
+			CURLOPT_POSTFIELDS => array()
 		));
-
 		$response = curl_exec($curl);
-
 		$curl_error_code = curl_errno($curl);
-		$curl_error      = curl_error($curl);
-
+		$curl_error = curl_error($curl);
 		curl_close($curl);
-
 		if ($curl_error || $curl_error_code) {
 			$error_msg = "Failed curl request. Curl error {$curl_error_code}";
 			if ($curl_error) {
@@ -220,30 +200,24 @@ class ScheduleLoader
 			}
 			throw new Exception($error_msg);
 		}
-
 		return $response;
 	}
 }
 
 // Данные для сохранения
-$dataToSave = array (array ('subject', 'cabinet', 'person', 'day_n', 'is_numerator', 'group', 'from_h', 'from_m', 'to_h', 'to_m'));
-
+$dataToSave = array(array('subject', 'cabinet', 'person', 'day_n', 'is_numerator', 'group', 'from_h', 'from_m', 'to_h', 'to_m'));
 // Получаем список всех групп
 $groups = ScheduleLoader::loadGroups();
-
 // Обрабатываем данные
 foreach ($groups as $groupName => $groupID) {
 	$schedule = ScheduleLoader::loadScheduleGroup($groupID, 1, 2019);
 	if (!$schedule)
 		continue;
-
 	foreach ($schedule as $item) {
 		$dataToSave[] = $item;
 	}
 }
-
 echo '<pre>';
 var_dump($dataToSave);
-
 // Сохраняем всё в файл
 ScheduleLoader::saveToCSV($dataToSave);

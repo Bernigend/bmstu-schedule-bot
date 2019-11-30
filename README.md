@@ -1,1 +1,0 @@
-# bmstu-schedule-bot
