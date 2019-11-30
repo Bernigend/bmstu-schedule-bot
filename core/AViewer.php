@@ -4,8 +4,6 @@
 namespace Core;
 
 
-use Core\Entities\Event;
-
 abstract class AViewer
 {
 	/**
