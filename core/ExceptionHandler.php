@@ -32,7 +32,6 @@ class ExceptionHandler
 		// Выводим его на экран, если включён режим отладки
 		if (Config::DEBUG_ON) {
 			echo $messageToLog;
-			ob_end_flush();
 		}
 		exit;
 	}
