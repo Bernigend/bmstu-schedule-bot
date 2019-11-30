@@ -12,7 +12,7 @@ use Exception;
 class VkUser extends AUser
 {
 	/**
-	 * AUser constructor.
+	 * VkUser constructor.
 	 *
 	 * @param $dbID - ID пользователя в базе данных
 	 * @param $destinationID - идентификатор назначения (куда/кому отправлять ответное сообщение)
