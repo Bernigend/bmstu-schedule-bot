@@ -205,7 +205,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		$response = $this->vkApiClient->messages()->send($this->config['access_token'], array (
 			'peer_id'  => $peerID,
 			'message'  => $message,
-			'keyboard' => $this->getKeyboard($keyboardType),
+			'keyboard' => ($peerID == $this->config['developers_talk_peer_id']) ? null : $this->getKeyboard($keyboardType),
 			'dont_parse_links' => 1,
 			'random_id' => random_int(1, 999999999999)
 		));
