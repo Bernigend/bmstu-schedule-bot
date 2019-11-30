@@ -93,24 +93,6 @@ class DataBase
 	}
 
 	/**
-	 * Возвращает значение определенного столбца таблицы базы данных
-	 * @param string $sql - требуемый SQL запрос
-	 * @param array|null $params - массив значений, которые следует подставить вместо "?" в подготовленном запросе
-	 * @return bool|mixed
-	 * @throws Exception
-	 */
-	public static function getCol(string $sql, array $params = null)
-	{
-		static::connect();
-
-		$row = static::query($sql, $params)->fetchColumn();
-		if ($row)
-			return $row;
-		else
-			return false;
-	}
-
-	/**
 	 * Возвращает все строки таблицы, удовлетворяющие условию выборки
 	 * @param string $sql - требуемый SQL запрос
 	 * @param array|null $params - массив значений, которые следует подставить вместо "?" в подготовленном запросе
@@ -129,30 +111,6 @@ class DataBase
 	}
 
 	/**
-	 * Возвращает значения столбца в виде одномерного массива
-	 *
-	 * @param string $sql
-	 * @param array|null $params
-	 * @return array|bool
-	 * @throws Exception
-	 */
-	public static function getColsInArray(string $sql, array $params = null)
-	{
-		static::connect();
-
-		$return = array();
-		$rows = static::query($sql, $params);
-		if (!$rows)
-			return false;
-
-		while ($colVal = $rows->fetchColumn()) {
-			array_push($return, $colVal);
-		}
-
-		return $return;
-	}
-
-	/**
 	 * Возвращает ID последнего запроса INSERT
 	 * @return integer
 	 */
@@ -166,7 +124,7 @@ class DataBase
 	 * Возвращает информацию о последней ошибке
 	 * @return mixed
 	 */
-	public static function getLastError ()
+	public static function getLastError()
 	{
 		static::connect();
 		return static::$connection->errorInfo()[2];
