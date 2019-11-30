@@ -127,7 +127,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		// Если бот отключён и пользователь не имеет администраторских прав
 		if (!Config::BOT_ONLINE && !array_search('peerID-' . $eventData['peer_id'], Config::ADMIN_USERS)) {
 			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Bot is offline and user has not admin privileges;\n");
-			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['bot_is_offline'], $this->getKeyboard('full'));
+			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['bot_is_offline'], 'full');
 			return true;
 		}
 
@@ -136,7 +136,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		if (!$userId) {
 			VkUser::register($eventData['peer_id'], 'group_name');
 			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("The user was registered;\n");
-			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['greetings_with_send_group_name'], $this->getKeyboard('cancel'));
+			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['greetings_with_send_group_name'], 'cancel');
 			return true;
 		}
 
