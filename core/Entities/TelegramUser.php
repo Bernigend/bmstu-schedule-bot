@@ -17,13 +17,15 @@ use Exception;
 class TelegramUser extends AUser
 {
 	/**
-	 * User constructor.
+	 * TelegramUser constructor.
 	 *
-	 * @param $DBid
+	 * @param $dbID - ID пользователя в базе данных
+	 * @param $destinationID - идентификатор назначения (куда/кому отправлять ответное сообщение)
 	 */
-	public function __construct($DBid)
+	public function __construct($dbID, $destinationID)
 	{
-		$this->DBid = $DBid;
+		$this->dbID = $dbID;
+		$this->destinationID = $destinationID;
 	}
 
 	/**
@@ -36,7 +38,7 @@ class TelegramUser extends AUser
 	 */
 	public function update(string $column, $value): bool
 	{
-		DB::query('UPDATE `' . Config::DB_PREFIX . 'users_telegram` SET `' . $column . '` = ? WHERE `id` = ?', array ($value, $this->DBid));
+		DB::query('UPDATE `' . Config::DB_PREFIX . 'users_telegram` SET `' . $column . '` = ? WHERE `id` = ?', array ($value, $this->dbID));
 		return true;
 	}
 
@@ -47,7 +49,7 @@ class TelegramUser extends AUser
 	 */
 	public function loadData(): void
 	{
-		$data = DB::getRow('SELECT * FROM `' . Config::DB_PREFIX . 'users_telegram` WHERE `id` = ?', array ($this->DBid));
+		$data = DB::getRow('SELECT * FROM `' . Config::DB_PREFIX . 'users_telegram` WHERE `id` = ?', array ($this->dbID));
 		foreach ($data as $columnName => $value) {
 			$this->{$columnName} = $value;
 		}
