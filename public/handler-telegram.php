@@ -8,15 +8,10 @@
 
 use Core\Bots\Telegram\TelegramBot;
 use Core\Config;
+use Core\Logger;
 use unreal4u\TelegramAPI\Telegram\Types\Update;
 
 require_once 'handler-main.php';
-
-// Проверяем секретный токен
-$explodedURI = explode('/', $_SERVER['REQUEST_URI']);
-if ($explodedURI[count($explodedURI)-1] !== Config::TELEGRAM_API_ACCESS_TOKEN)
-	die();
-unset($explodedURI);
 
 // Декодируем полученное событие из JSON в объект
 $event = json_decode(file_get_contents('php://input'), true);
@@ -31,3 +26,12 @@ if (is_null($event))
 $event = new Update($event);
 $VkBot = new TelegramBot();
 $VkBot->handle($event);
+
+// Завершаем логирование
+if (isset($BOT_LOG) && Config::BOT_LOG_ON) {
+	$BOT_LOG->addToLog(' - Script time: ' . round(microtime(true) - $START_TIME, 4) . ' sec; Memory usage: ' . memory_get_usage() . ' bytes; Memory peak usage: ' . memory_get_peak_usage() . ' bytes');
+	Logger::log($BOT_LOG->fileName, $BOT_LOG->textLog);
+}
+
+// Логируем время выполнения скрипта в БД
+Logger::logScriptTime(round(microtime(true) - $START_TIME, 4));
