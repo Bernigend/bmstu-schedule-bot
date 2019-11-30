@@ -6,7 +6,6 @@ namespace Core\Bots\VK;
 
 use Core\ACommandHandler;
 use Core\AUser;
-use Core\AViewer;
 use Core\Entities\Command;
 use VK\Exceptions\Api\VKApiMessagesCantFwdException;
 use VK\Exceptions\Api\VKApiMessagesChatBotFeatureException;
@@ -35,9 +34,9 @@ class VkCommandHandler extends ACommandHandler
 	 * @param VkBot $bot
 	 * @param Command $command
 	 * @param AUser $user
-	 * @param AViewer $viewer
+	 * @param VkViewer $viewer
 	 */
-	public function __construct(VkBot $bot, Command $command, AUser $user, AViewer $viewer)
+	public function __construct(VkBot $bot, Command $command, AUser $user, VkViewer $viewer)
 	{
 		parent::__construct($bot, $command, $user, $viewer);
 	}
