@@ -66,7 +66,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		if ($event->type == 'confirmation')
 			$this->confirmation($event->group_id, $event->secret ?? null);
 		else
-			parent::parseObject($event->group_id, $event->secret ?? null, $event->type, (array)$event->object ?? null);
+			parent::parseObject($event->group_id, $event->secret ?? null, $event->type, (array)$event->object);
 	}
 
 	/**
@@ -101,23 +101,23 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		if (!$this->checkSenderServer($groupId, $secret))
 			die ('Access denied');
 
-		if (!isset ($eventData['id']))
+		if (!isset($eventData['id']))
 			throw new Exception('Required parameter "id" is not passed: ' . print_r($eventData, true));
 
-		if (!isset ($eventData['peer_id']))
+		if (!isset($eventData['peer_id']))
 			throw new Exception('Required parameter "peer_id" is not passed: ' . print_r($eventData, true));
 
-		if (!isset ($eventData['text']))
+		if (!isset($eventData['text']))
 			throw new Exception('Required parameter "text" is not passed: ' . print_r($eventData, true));
 
 		echo 'ok';
 
-		if (isset($BOT_LOG)) $BOT_LOG->addToLog("VK: group_id={$groupId}({$this->config['name']}); message_id={$eventData['id']}, peer_id={$eventData['peer_id']}, text='{$eventData['text']}';\n");
+		if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("VK: group_id={$groupId}({$this->config['name']}); message_id={$eventData['id']}, peer_id={$eventData['peer_id']}, text='{$eventData['text']}';\n");
 
 		// Проверяем, был ли уже обработан запрос
 		$date = DataBase::getOne('SELECT `date` FROM `' . Config::DB_PREFIX . 'handled_messages_vk` WHERE `message_id` = ? AND `peer_id` = ?', array ($eventData['id'], $eventData['peer_id']));
 		if ($date) {
-			if (isset($BOT_LOG)) $BOT_LOG->addToLog("Message has already been processed at '{$date}';\n");
+			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Message has already been processed at '{$date}';\n");
 			return false;
 		}
 
@@ -126,7 +126,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 
 		// Если бот отключён и пользователь не имеет администраторских прав
 		if (!Config::BOT_ONLINE && !array_search('peerID-' . $eventData['peer_id'], Config::ADMIN_USERS)) {
-			if (isset($BOT_LOG)) $BOT_LOG->addToLog("Bot is offline and user has not admin privileges;\n");
+			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Bot is offline and user has not admin privileges;\n");
 			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['bot_is_offline'], $this->getKeyboard('full'));
 			return true;
 		}
@@ -135,7 +135,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		$userId = VkUser::find($eventData['peer_id']);
 		if (!$userId) {
 			VkUser::register($eventData['peer_id'], 'group_name');
-			if (isset($BOT_LOG)) $BOT_LOG->addToLog("The user was registered;\n");
+			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("The user was registered;\n");
 			$this->sendMessage($eventData['peer_id'], ACommandHandler::$answers['greetings_with_send_group_name'], $this->getKeyboard('cancel'));
 			return true;
 		}
@@ -210,7 +210,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 			'random_id' => random_int(1, 999999999999)
 		));
 
-		if (isset($BOT_LOG)) $BOT_LOG->addToLog(" - Send message finished in " . round(microtime(true) - $send_message_start, 4) . " sec; Response: " . print_r($response, true) . ";\n");
+		if (Config::BOT_LOG_ON) $BOT_LOG->addToLog(" - Send message finished in " . round(microtime(true) - $send_message_start, 4) . " sec; Response: " . print_r($response, true) . ";\n");
 
 		return true;
 	}

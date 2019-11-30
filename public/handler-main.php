@@ -9,8 +9,7 @@ use Core\Logger;
 require_once '../vendor/autoload.php';
 
 // Запуск логера
-if (Config::BOT_LOG_ON)
-	$BOT_LOG = new Logger('requests_' . date('d.m.Y') . '.log');
+$BOT_LOG = new Logger('requests_' . date('d.m.Y') . '.log');
 
 // Если бот выключен на системном уровне - прекращаем работу
 if (!Config::BOT_SYSTEM_ONLINE)
