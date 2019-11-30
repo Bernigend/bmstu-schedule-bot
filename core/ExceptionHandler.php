@@ -13,6 +13,7 @@ class ExceptionHandler
 	 * Обработчик исключений
 	 * Логирует переданное исключение в системный лог-файл или указанный в конфигурации бота
 	 * Если включён режим отладки - выводит информацию об исключении на экран пользователя
+	 *
 	 * @param Throwable $exception
 	 */
 	public static function handle(Throwable $exception): void
@@ -35,8 +36,10 @@ class ExceptionHandler
 		}
 		exit;
 	}
+
 	/**
 	 * Обработчик ошибок. Перебрасывает ошибку в исключение
+	 *
 	 * @param $level
 	 * @param $message
 	 * @param $file
