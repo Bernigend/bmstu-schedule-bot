@@ -241,7 +241,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'На сегодня',
-									'payload' => '/today'
+									'payload' => array (
+										'command' => '/today'
+									)
 								),
 								'color' => 'primary'
 							),
@@ -249,7 +251,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'На завтра',
-									'payload' => '/tomorrow'
+									'payload' => array (
+										'command' => '/tomorrow'
+									)
 								),
 								'color' => 'primary'
 							)
@@ -259,7 +263,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'На эту неделю',
-									'payload' => '/currentweek'
+									'payload' => array (
+										'command' => '/currentweek'
+									)
 								),
 								'color' => 'primary'
 							),
@@ -267,7 +273,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'На следующую неделю',
-									'payload' => '/nextweek'
+									'payload' => array (
+										'command' => '/nextweek'
+									)
 								),
 								'color' => 'primary'
 							)
@@ -277,7 +285,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'Изменить группу',
-									'payload' => '/changegroup'
+									'payload' => array (
+										'command' => '/changegroup'
+									)
 								),
 								'color' => 'secondary'
 							)
@@ -287,7 +297,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'Задать вопрос',
-									'payload' => '/askquestion'
+									'payload' => array (
+										'command' => '/askquestion'
+									)
 								),
 								'color' => 'secondary'
 							),
@@ -295,7 +307,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'Список команд',
-									'payload' => '/help'
+									'payload' => array (
+										'command' => '/help'
+									)
 								),
 								'color' => 'secondary'
 							)
@@ -311,7 +325,9 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 								'action' => array (
 									'type' => 'text',
 									'label' => 'Отмена',
-									'payload' => '/cancel'
+									'payload' => array (
+										'command' => '/cancel'
+									)
 								),
 								'color' => 'secondary'
 							)

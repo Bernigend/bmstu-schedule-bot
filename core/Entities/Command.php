@@ -106,7 +106,7 @@ class Command
 	public function init(AUser $user = null)
 	{
 		// Если был передан payload с командой (при нажатии на клавиатуру)
-		if (!is_null($this->payload) && array_key_exists($this->payload, $this->handlerNames)) {
+		if (!is_null($this->payload) && isset($this->payload['command']) && array_key_exists($this->payload['command'], $this->handlerNames)) {
 			$this->handlerName = $this->handlerNames[$this->payload];
 			return true;
 		}
