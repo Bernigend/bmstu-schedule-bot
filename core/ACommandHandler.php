@@ -78,7 +78,9 @@ abstract class ACommandHandler
 		'cannot_find_group' => "Группа не найдена. Проверьте правильность написания.\nНапример:  ИУ1-11Б, К3-12Б и др.\n\nДля отмены пришлите \"Отмена\"",
 		'cannot_find_default_group' => 'Установленная по умолчанию группа не найдена. Измените её с помощью команды "Изменить группу"',
 		'set_group_name' => "Вы не установили группу по умолчанию.\nУстановите её с помощью команды \"Изменить группу\"",
-		'get_group_schedule_undefined_error' => 'Неизвестная ошибка при получении расписания группы'
+		'get_group_schedule_undefined_error' => 'Неизвестная ошибка при получении расписания группы',
+		'error_during_request_to_the_server' => "Произошла ошибка при обращении к серверу.\nПовторите чуть позже.",
+		'actual_problem' => "Сервера бауманки решили прилечь, поэтому бот не работает. Ждём их реанимации.\n\nРасписание МФ МГТУ доступно на официальном сайте в штатном режиме."
 	);
 
 	/**
@@ -137,23 +139,34 @@ abstract class ACommandHandler
 	 */
 	protected function getGroupSchedule(): array
 	{
-		if (is_null($this->command->arguments))
-			if (!is_null($this->user->group_symbolic)){
-				$schedule = Schedule::loadSchedule($this->user->group_symbolic);
-				if (!isset($schedule['data']['group']['symbolic']) || empty($schedule['data']['group']['symbolic']))
-					return array ('error' => 'cannot_find_default_group');
-			} else
-				return array ('error' => 'set_group_name');
-		else {
-			// Ищем группу
-			$group = Schedule::searchGroup($this->command->arguments[0]);
-			if (!$group)
-				return array('error' => 'cannot_find_group');
+		try {
 
-			$schedule = Schedule::loadSchedule($group['symbolic']);
+			if (is_null($this->command->arguments))
+				if (!is_null($this->user->group_symbolic)){
+					$schedule = Schedule::loadSchedule($this->user->group_symbolic);
+					if (!isset($schedule['data']['group']['symbolic']) || empty($schedule['data']['group']['symbolic']))
+						return array ('error' => 'cannot_find_default_group');
+				} else
+					return array ('error' => 'set_group_name');
+			else {
+				// Ищем группу
+				$group = Schedule::searchGroup($this->command->arguments[0]);
+				if (!$group)
+					return array('error' => 'cannot_find_group');
+
+				$schedule = Schedule::loadSchedule($group['symbolic']);
+			}
+			return $schedule;
+
+		} catch (Exception $e) {
+			if (isset(static::$answers['actual_problem']) && !empty(static::$answers['actual_problem']))
+				$message = static::$answers['actual_problem'];
+			else
+				$message = static::$answers['error_during_request_to_the_server'];
+
+			$this->bot->sendMessage($this->user->destinationID, $message, 'full');
+			throw new Exception($e->getMessage());
 		}
-
-		return $schedule;
 	}
 
 
