@@ -117,7 +117,7 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 		// Проверяем, был ли уже обработан запрос
 		$date = DataBase::getOne('SELECT `date` FROM `' . Config::DB_PREFIX . 'handled_messages_vk` WHERE `peer_id` = ? AND `message_id` = ? AND `group_id` = ?', array ($eventData['id'], $eventData['peer_id'], $groupId));
 		if ($date) {
-			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog("Message has already been processed at '{$date}';\n");
+			if (Config::BOT_LOG_ON) $BOT_LOG->addToLog(" - Message has already been processed at '{$date}';\n");
 			return false;
 		}
 
