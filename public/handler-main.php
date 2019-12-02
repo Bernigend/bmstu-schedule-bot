@@ -2,6 +2,8 @@
 
 $START_TIME = microtime(true);
 
+ignore_user_abort(true);
+
 use Core\Config;
 use Core\Logger;
 
