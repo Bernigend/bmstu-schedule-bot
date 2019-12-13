@@ -287,6 +287,18 @@ class VkBot extends VKCallbackApiServerHandler implements IBot
 							array (
 								'action' => array (
 									'type' => 'text',
+									'label' => 'Экзамены',
+									'payload' => array (
+										'command' => '/exams'
+									)
+								),
+								'color' => 'primary'
+							)
+						),
+						array (
+							array (
+								'action' => array (
+									'type' => 'text',
 									'label' => 'Изменить группу',
 									'payload' => array (
 										'command' => '/changegroup'

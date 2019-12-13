@@ -235,6 +235,31 @@ class VkViewer extends AViewer
 	}
 
 	/**
+	 * Возвращает расписание экзаменов в подготовленном для вывода виде
+	 *
+	 * @param array $exams - массив с данными об экзаменах
+	 * @param string|null $groupName - название группы
+	 * @return string
+	 */
+	public function viewExams(array $exams, string $groupName = null): string
+	{
+		$message = "Расписание экзаменов:\n\n";
+
+		if (!is_null($groupName))
+			$message .= "Группа: {$groupName}\n\n";
+
+		foreach ($exams as $exam) {
+			$time = strtotime($exam['date']);
+			$message .= " 📌 {$exam['subject']}\n";
+			$message .= " - " . date ('d', $time) . ' ' . $this->months[date('n', $time)] . ", {$exam['time']}\n";
+			$message .= " - {$exam['person']}, {$exam['cabinet']}\n";
+			$message .= "\n";
+		}
+
+		return $message;
+	}
+
+	/**
 	 * Возвращает расписание на день в подготовленном для вывода виде
 	 *
 	 * @param array $scheduleDays - массив расписания

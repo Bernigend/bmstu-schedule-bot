@@ -53,4 +53,13 @@ abstract class AViewer
 	 * @return string
 	 */
 	public abstract function viewNextWeek(array $schedule, ?array $events = null): string;
+
+	/**
+	 * Возвращает расписание экзаменов в подготовленном для вывода виде
+	 *
+	 * @param array $exams - массив с данными об экзаменах
+	 * @param string|null $groupName - название группы
+	 * @return string
+	 */
+	public abstract function viewExams(array $exams, string $groupName = null): string;
 }

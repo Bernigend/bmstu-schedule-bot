@@ -80,7 +80,8 @@ abstract class ACommandHandler
 		'set_group_name' => "Вы не установили группу по умолчанию.\nУстановите её с помощью команды \"Изменить группу\"",
 		'get_group_schedule_undefined_error' => 'Неизвестная ошибка при получении расписания группы',
 		'error_during_request_to_the_server' => "Произошла ошибка при обращении к серверу.\nПовторите чуть позже.",
-		'actual_problem' => "Сервера бауманки решили прилечь, поэтому бот не работает. Ждём их реанимации.\n\nРасписание МФ МГТУ доступно на официальном сайте в штатном режиме."
+		'exams_not_found' => "Извините, расписание экзаменов вашей группы не найдено."
+//		'actual_problem' => "Сервера бауманки решили прилечь, поэтому бот не работает. Ждём их реанимации.\n\nРасписание МФ МГТУ доступно на официальном сайте в штатном режиме."
 	);
 
 	/**
@@ -288,6 +289,24 @@ abstract class ACommandHandler
 		$answer = $this->viewer->viewNextWeek($schedule, Schedule::getEventsForWeek(true, $schedule['data']['group']['city']));
 		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
 		return;
+	}
+
+	/**
+	 * Обработчик команды "Расписание экзаменов"
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	protected function sendExams(): void
+	{
+		$exams = DataBase::getAll("SELECT `subject`, `person`, `date`, `time`, `cabinet` FROM `exams` WHERE `group_symbolic` = ?", array($this->user->group_symbolic));
+		if (!$exams) {
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['exams_not_found'], 'full');
+			return;
+		}
+
+		$answer = $this->viewer->viewExams($exams);
+		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
 	}
 
 	/**
