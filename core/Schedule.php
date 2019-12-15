@@ -164,6 +164,7 @@ class Schedule
 	{
 		$curl = curl_init($URI);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE); // вернуть ответ в переменную
+		curl_setopt($curl, CURLOPT_TIMEOUT, 2);
 
 		$response = curl_exec($curl);
 
@@ -178,8 +179,6 @@ class Schedule
 			}
 			throw new Exception($error_msg);
 		}
-
-//		Logger::log('schedule_load_data_' . date('d.m.Y') . '.log', 'URI: ' . $URI . '; Response: ' . substr(var_export($response, true), 0, 128) . '...');
 
 		return $response;
 	}

@@ -198,6 +198,11 @@ class TelegramBot implements IBot
 						),
 						array (
 							array (
+								'text' => 'Экзамены'
+							)
+						),
+						array (
+							array (
 								'text' => 'Изменить группу'
 							)
 						),

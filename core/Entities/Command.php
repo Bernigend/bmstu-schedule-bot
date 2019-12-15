@@ -77,6 +77,11 @@ class Command
 		'/askquestion'  => 'askNewQuestion',
 		'задать вопрос' => 'askNewQuestion',
 
+		7          => 'sendExams',
+		'экзамены' => 'sendExams',
+		'расписание экзаменов' => 'sendExams',
+		'/exams'   => 'sendExams',
+
 		// Отмена ввода
 		'/cancel' => 'cancelInput',
 		'отмена'  => 'cancelInput',
