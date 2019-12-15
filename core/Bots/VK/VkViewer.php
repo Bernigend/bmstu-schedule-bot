@@ -252,7 +252,8 @@ class VkViewer extends AViewer
 			$time = strtotime($exam['date']);
 			$message .= " 📌 {$exam['subject']}\n";
 			$message .= " - " . date ('d', $time) . ' ' . $this->months[date('n', $time)] . ", {$exam['time']}\n";
-			$message .= " - {$exam['person']}, {$exam['cabinet']}\n";
+			$message .= " - {$exam['person']}";
+			$message .= (empty($exam['cabinet']) ? '' : ', ' . $exam['cabinet']) . "\n";
 			$message .= "\n";
 		}
 

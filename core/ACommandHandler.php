@@ -71,6 +71,7 @@ abstract class ACommandHandler
 		'nothing_to_cancel' => 'Нечего отменять',
 		'question_successfully_sent' => 'Вопрос был успешно отправлен. С вами свяжутся в ближайшее время',
 		'telegram_answer_to_question' => 'Вы можете задать свой вопрос в [в группе вк](https://vk.com/bmstu_schedule)',
+		'check_exams_info' => "\nВнимание: сверяйте расписание экзаменов с информацией на стендах деканата своего факультета.",
 
 		// Ошибки
 		'undefined_command' => 'Неизвестная команда, попробуйте изменить запрос :)',
@@ -306,6 +307,7 @@ abstract class ACommandHandler
 		}
 
 		$answer = $this->viewer->viewExams($exams);
+		$answer .= static::$answers['check_exams_info'];
 		$this->bot->sendMessage($this->user->destinationID, $answer, 'full');
 	}
 
