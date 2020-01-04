@@ -129,7 +129,7 @@ class Command
 		// Разбиваем строку по пробелам и проверяем наличие команды из первого элемента
 		$preparedCommand = explode(' ', $preparedCommand);
 		if ($preparedCommand !== false && array_key_exists($preparedCommand[0], $this->handlerNames)) {
-			$this->handlerName = array_shift($preparedCommand);
+			$this->handlerName = $this->handlerNames[array_shift($preparedCommand)];
 			$this->arguments   = $preparedCommand;
 			return true;
 		}

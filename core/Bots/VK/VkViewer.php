@@ -249,9 +249,9 @@ class VkViewer extends AViewer
 			$message .= "Группа: {$groupName}\n\n";
 
 		foreach ($exams as $exam) {
-			$time = strtotime($exam['date']);
+			$time = explode('-', $exam['date']);
 			$message .= " 📌 {$exam['subject']}\n";
-			$message .= " - " . date ('d', $time) . ' ' . $this->months[date('n', $time)] . ", {$exam['time']}\n";
+			$message .= " - " . $time[2] . " " . ($this->months[(int)$time[1]] ?? 'числа') . ", {$exam['time']}\n";
 			$message .= " - {$exam['person']}";
 			$message .= (empty($exam['cabinet']) ? '' : ', ' . $exam['cabinet']) . "\n";
 			$message .= "\n";
