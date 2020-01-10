@@ -72,6 +72,7 @@ abstract class ACommandHandler
 		'question_successfully_sent' => 'Вопрос был успешно отправлен. С вами свяжутся в ближайшее время',
 		'telegram_answer_to_question' => 'Вы можете задать свой вопрос в [в группе вк](https://vk.com/bmstu_schedule)',
 		'check_exams_info' => "\nВнимание: расписание экзаменов предоставлено в ознакомительных целях, сверяйте его с информацией на стендах деканата своего факультета.",
+		'its_time_for_exams' => "😴 Январь - месяц праздников и экзаменов, занятия не проводятся.\n\nРасписание экзаменов: пришлите \"Экзамены\"\n\n ---- ---- \n\nДля вывода списка команд пришлите \"Список команд\" или \"/help\"",
 
 		// Ошибки
 		'undefined_command' => 'Неизвестная команда, попробуйте изменить запрос :)',
@@ -224,6 +225,11 @@ abstract class ACommandHandler
 	 */
 	protected function sendScheduleForToday(): void
 	{
+		if (date("n") == 1) {
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['its_time_for_exams'], 'full');
+			return;
+		}
+
 		$schedule = $this->getGroupSchedule();
 		if (isset($schedule['error'])){
 			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
@@ -243,6 +249,11 @@ abstract class ACommandHandler
 	 */
 	protected function sendScheduleForTomorrow(): void
 	{
+		if (date("n") == 1) {
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['its_time_for_exams'], 'full');
+			return;
+		}
+
 		$schedule = $this->getGroupSchedule();
 		if (isset($schedule['error'])){
 			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
@@ -262,6 +273,11 @@ abstract class ACommandHandler
 	 */
 	protected function sendScheduleForThisWeek(): void
 	{
+		if (date("n") == 1) {
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['its_time_for_exams'], 'full');
+			return;
+		}
+
 		$schedule = $this->getGroupSchedule();
 		if (isset($schedule['error'])){
 			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
@@ -281,6 +297,11 @@ abstract class ACommandHandler
 	 */
 	protected function sendScheduleForNextWeek(): void
 	{
+		if (date("n") == 1) {
+			$this->bot->sendMessage($this->user->destinationID, static::$answers['its_time_for_exams'], 'full');
+			return;
+		}
+
 		$schedule = $this->getGroupSchedule();
 		if (isset($schedule['error'])){
 			$this->bot->sendMessage($this->user->destinationID, static::$answers[$schedule['error']] ?? static::$answers['get_group_schedule_undefined_error'], 'full');
